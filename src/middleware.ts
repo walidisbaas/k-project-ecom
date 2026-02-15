@@ -13,7 +13,7 @@ const PROTECTED_PREFIXES = [
 
 const AUTH_PREFIXES = ["/login", "/signup"];
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   let response = NextResponse.next({ request: req });
 
   const supabase = createServerClient(
