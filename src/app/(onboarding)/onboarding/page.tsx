@@ -65,6 +65,8 @@ function OnboardingWizardContent() {
   );
 
   const handleStoreCreated = useCallback((newStoreId: string) => {
+    // Prevent the store-fetch useEffect from overriding the step
+    initialStepSet.current = true;
     setStoreId(newStoreId);
     // Update URL so refresh works
     window.history.replaceState(null, "", `/onboarding?store_id=${newStoreId}`);
