@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const WELCOME_MESSAGE = {
   text: "Hi! 👋 I'm here to help. Ask me anything about Kenso — setup, pricing, or how we can help your Shopify store.",
   from: "bot",
-};
+} as const;
 
 export function ChatWidget() {
   const pathname = usePathname();
