@@ -47,7 +47,7 @@ export function DemoMockup() {
   }, [visible]);
 
   return (
-    <section className="px-6 pb-20">
+    <section className="px-6 pb-10 sm:pb-20">
       <div ref={containerRef} className="mx-auto max-w-[960px]">
         <div className="relative overflow-hidden rounded-2xl border border-mk-border shadow-[0_1px_3px_rgba(26,18,7,0.06),0_8px_32px_rgba(26,18,7,0.08),0_0_0_1px_rgba(255,255,255,0.5)_inset]">
           {/* Reserve space with 16:9 ratio to prevent layout shift */}
