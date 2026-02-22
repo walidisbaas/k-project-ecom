@@ -81,8 +81,29 @@ export interface Store {
   onboarding_step: number;
   scrape_status: "pending" | "scraping" | "complete" | "failed";
   scrape_data: Json | null;
+  website_pages: WebsitePage[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface WebsitePage {
+  url: string;
+  title: string;
+  markdown: string;
+}
+
+export interface PreviewThread {
+  id: string;
+  store_id: string;
+  subject: string | null;
+  messages: PreviewThreadMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PreviewThreadMessage {
+  role: "customer" | "ai";
+  text: string;
 }
 
 export interface EmailConnection {

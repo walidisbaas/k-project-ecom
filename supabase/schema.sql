@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS stores (
   scrape_status TEXT DEFAULT 'pending'
     CHECK (scrape_status IN ('pending', 'scraping', 'complete', 'failed')),
   scrape_data JSONB,
+  website_pages JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -167,6 +168,16 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Preview threads (onboarding AI chat threads)
+CREATE TABLE IF NOT EXISTS preview_threads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  subject TEXT,
+  messages JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Leads (from landing page — before signup)
 CREATE TABLE IF NOT EXISTS leads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -200,6 +211,7 @@ CREATE INDEX IF NOT EXISTS idx_review_queue_store_status ON review_queue(store_i
 CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON webhook_events(event_id);
 CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
 CREATE INDEX IF NOT EXISTS idx_leads_token ON leads(magic_link_token);
+CREATE INDEX IF NOT EXISTS idx_preview_threads_store ON preview_threads(store_id);
 
 -- ============================================================
 -- ROW LEVEL SECURITY
@@ -239,6 +251,10 @@ CREATE POLICY email_logs_owner ON email_logs
   FOR ALL USING (store_id IN (SELECT id FROM stores WHERE merchant_id = auth.uid()));
 
 CREATE POLICY review_queue_owner ON review_queue
+  FOR ALL USING (store_id IN (SELECT id FROM stores WHERE merchant_id = auth.uid()));
+
+ALTER TABLE preview_threads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY preview_threads_owner ON preview_threads
   FOR ALL USING (store_id IN (SELECT id FROM stores WHERE merchant_id = auth.uid()));
 
 -- webhook_events and leads: no RLS — accessed only by service role
