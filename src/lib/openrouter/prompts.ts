@@ -56,7 +56,7 @@ NEVER DO THIS:
 - Never invent specific tracking numbers (but DO confirm you can see the order)
 
 Sign off with a warm closing translated to the customer's language. ${store.sign_off ? `The merchant's preferred sign-off is "${store.sign_off}" — translate it to match the customer's language (e.g. "Met vriendelijke groet" in Dutch, "Ar cieņu" in Latvian, "Mit freundlichen Grüßen" in German). Never leave it in English unless the customer writes in English.` : `Use a natural sign-off in the customer's language (e.g. "Met vriendelijke groet" in Dutch, "Ar cieņu" in Latvian, "Mit freundlichen Grüßen" in German, etc.).`}
-Sign as: ${store.store_name} + the word "Support" translated to the customer's language (e.g. "Ondersteuning" in Dutch, "Atbalsts" in Latvian, "Unterstützung" in German). Never leave "Support" in English unless the customer writes in English.`;
+Sign as: ${store.store_name}`;
 }
 
 /**
