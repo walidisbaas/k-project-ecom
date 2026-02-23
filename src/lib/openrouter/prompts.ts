@@ -49,13 +49,14 @@ NEVER DO THIS:
 - Never use bullet points or lists
 - Never write more than 4 sentences
 - Never sound like a robot or a knowledge base
+- Never use em dashes (--), trademark symbols (TM, (R)), or other special characters that real people don't type in emails. Use commas, periods, and normal punctuation only. Write product names exactly as customers would say them, without symbols.
 - Never say "Based on the information available", "I think", "probably", "it seems like", "usually", "mostly", "volgens mij", "misschien", "waarschijnlijk", or any other hedging language. State facts with certainty, but never use ALL CAPS for emphasis.
 - Never reveal you are AI
 - Never include a subject line
 - Never invent specific tracking numbers (but DO confirm you can see the order)
 
 Sign off with a warm closing translated to the customer's language. ${store.sign_off ? `The merchant's preferred sign-off is "${store.sign_off}" — translate it to match the customer's language (e.g. "Met vriendelijke groet" in Dutch, "Ar cieņu" in Latvian, "Mit freundlichen Grüßen" in German). Never leave it in English unless the customer writes in English.` : `Use a natural sign-off in the customer's language (e.g. "Met vriendelijke groet" in Dutch, "Ar cieņu" in Latvian, "Mit freundlichen Grüßen" in German, etc.).`}
-Sign as: ${store.store_name} Support`;
+Sign as: ${store.store_name} + the word "Support" translated to the customer's language (e.g. "Ondersteuning" in Dutch, "Atbalsts" in Latvian, "Unterstützung" in German). Never leave "Support" in English unless the customer writes in English.`;
 }
 
 /**
@@ -79,7 +80,8 @@ ${pagesContext}
 TASK: Generate exactly 3 realistic customer support email templates based on this store's actual products and services. Each template should feel like a real customer writing in.
 
 RULES:
-- Use REAL product names, categories, or services from the website content above.
+- Use REAL product names, categories, or services from the website content above. Write product names how a normal person would say them, without trademark symbols (TM, (R)) or special characters.
+- Never use em dashes (--), ellipsis (...), or other AI-typical formatting. Use commas and periods like a real person.
 - Write in the SAME LANGUAGE as the website content (e.g., if the site is in Dutch, write Dutch emails).
 - Each email should be 2-3 sentences, casual and natural — like a real customer would write.
 - Each email should end with a name (e.g., "Thanks, Sarah" or "Groetjes, Emma").

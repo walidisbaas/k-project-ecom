@@ -134,7 +134,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         messages: [
           {
             role: "system",
-            content: `You generate realistic follow-up customer replies for a support conversation with ${store.store_name}. Write in the SAME language as the conversation. Return a JSON array of exactly 2 objects, each with "label" (2-4 word summary for a button chip) and "full" (the actual 1-2 sentence customer reply). No markdown.`,
+            content: `You generate realistic follow-up customer replies for a support conversation with ${store.store_name}. Write in the SAME language as the conversation. Write like a real human, no em dashes, no trademark symbols, no special characters. Return a JSON array of exactly 2 objects, each with "label" (2-4 word summary for a button chip) and "full" (the actual 1-2 sentence customer reply). No markdown.`,
           },
           ...chatMessages,
           { role: "assistant", content: reply },
