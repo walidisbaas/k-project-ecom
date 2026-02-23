@@ -77,6 +77,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<{ label: string; full: string }[]>([]);
 
   const threadEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController>(null);
@@ -151,6 +152,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
       setMessages(newMessages);
       setExpandedIndex(newMessages.length - 1);
       setInputText("");
+      setSuggestions([]);
       setThinking(true);
 
       abortRef.current?.abort();
@@ -170,7 +172,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
 
         if (!res.ok) throw new Error("Failed to generate reply");
 
-        const data = (await res.json()) as { reply: string; threadId: string | null };
+        const data = (await res.json()) as { reply: string; threadId: string | null; suggestions?: { label: string; full: string }[] };
 
         if (data.threadId) {
           setThreadId(data.threadId);
@@ -181,6 +183,10 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
           setExpandedIndex(updated.length - 1);
           return updated;
         });
+
+        if (data.suggestions && data.suggestions.length > 0) {
+          setSuggestions(data.suggestions);
+        }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         // On error: roll back the customer message and show error banner
@@ -214,6 +220,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
     setThinking(false);
     setError(false);
     setExpandedIndex(null);
+    setSuggestions([]);
   }, []);
 
   if (loading) {
@@ -457,11 +464,30 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
           </button>
         </div>
 
+        {/* Follow-up suggestions — shown after AI replies */}
+        {hasMessages && !thinking && suggestions.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <span className="text-xs text-mk-text-muted">
+              or reply with:
+            </span>
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => setInputText(s.full)}
+                className="rounded-full border border-mk-border bg-white px-3 py-1.5 text-xs font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent animate-in fade-in duration-300"
+                style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Template chips — only when empty */}
         {!hasMessages && (
           <div className="mt-3 flex flex-wrap items-center gap-2 onboarding-stagger-4">
             <span className="text-xs text-mk-text-muted">
-              or choose from a template:
+              or choose:
             </span>
             {templates === null ? (
               <>

@@ -97,34 +97,83 @@ export async function POST(req: NextRequest, { params }: Params) {
       { role: "ai", text: reply },
     ];
 
-    // Persist thread — upsert by threadId or create new
+    // Persist thread + generate follow-up suggestions in parallel
     let threadId = parsed.data.threadId ?? null;
 
-    if (threadId) {
-      await supabaseAdmin
-        .from("preview_threads")
-        .update({
-          messages: fullMessages as unknown as Json,
-          subject: parsed.data.subject ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", threadId)
-        .eq("store_id", storeId);
-    } else {
-      const { data: newThread } = await supabaseAdmin
-        .from("preview_threads")
-        .insert({
-          store_id: storeId,
-          subject: parsed.data.subject ?? null,
-          messages: fullMessages as unknown as Json,
-        })
-        .select("id")
-        .single();
+    const threadPromise = (async () => {
+      if (threadId) {
+        await supabaseAdmin
+          .from("preview_threads")
+          .update({
+            messages: fullMessages as unknown as Json,
+            subject: parsed.data.subject ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", threadId)
+          .eq("store_id", storeId);
+      } else {
+        const { data: newThread } = await supabaseAdmin
+          .from("preview_threads")
+          .insert({
+            store_id: storeId,
+            subject: parsed.data.subject ?? null,
+            messages: fullMessages as unknown as Json,
+          })
+          .select("id")
+          .single();
 
-      threadId = newThread?.id ?? null;
-    }
+        threadId = newThread?.id ?? null;
+      }
+    })();
 
-    return NextResponse.json({ reply, threadId });
+    // Generate 2 follow-up customer responses the user could send next
+    interface Suggestion { label: string; full: string }
+    const suggestionsPromise = openrouter.chat.completions
+      .create({
+        model: PREVIEW_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: `You generate realistic follow-up customer replies for a support conversation with ${store.store_name}. Write in the SAME language as the conversation. Return a JSON array of exactly 2 objects, each with "label" (2-4 word summary for a button chip) and "full" (the actual 1-2 sentence customer reply). No markdown.`,
+          },
+          ...chatMessages,
+          { role: "assistant", content: reply },
+          {
+            role: "user",
+            content:
+              "Generate 2 follow-up replies this customer would likely send next. Make them different scenarios (e.g. one satisfied, one pushing back). Return as JSON array of 2 objects: [{\"label\": \"short chip text\", \"full\": \"actual customer reply\"}, ...]",
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 400,
+        response_format: { type: "json_object" },
+      })
+      .then((res) => {
+        const content = res.choices[0]?.message.content;
+        if (!content) return [];
+        try {
+          const raw = JSON.parse(content);
+          const arr: unknown[] = Array.isArray(raw)
+            ? raw
+            : (typeof raw === "object" && raw !== null
+                ? (Object.values(raw).find(Array.isArray) as unknown[] | undefined) ?? []
+                : []);
+          return arr
+            .filter((s): s is Suggestion =>
+              typeof s === "object" && s !== null &&
+              typeof (s as Suggestion).label === "string" &&
+              typeof (s as Suggestion).full === "string"
+            )
+            .slice(0, 2);
+        } catch {
+          return [];
+        }
+      })
+      .catch(() => [] as Suggestion[]);
+
+    const [, suggestions] = await Promise.all([threadPromise, suggestionsPromise]);
+
+    return NextResponse.json({ reply, threadId, suggestions });
   } catch (err) {
     const errObj = err as Record<string, unknown>;
     console.error("[preview/chat] OpenRouter error:", {
