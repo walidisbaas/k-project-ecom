@@ -79,13 +79,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     let templates: TemplateChip[];
     if (Array.isArray(parsed)) {
       templates = parsed;
-    } else if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "templates" in parsed &&
-      Array.isArray((parsed as Record<string, unknown>).templates)
-    ) {
-      templates = (parsed as Record<string, unknown>).templates as TemplateChip[];
+    } else if (typeof parsed === "object" && parsed !== null) {
+      const arr = Object.values(parsed as Record<string, unknown>).find(Array.isArray);
+      if (!arr) return NextResponse.json({ templates: [] });
+      templates = arr as TemplateChip[];
     } else {
       return NextResponse.json({ templates: [] });
     }

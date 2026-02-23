@@ -8,10 +8,9 @@ import {
   ArrowLeft,
   Send,
   RotateCcw,
-  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Store, WebsitePage } from "@/types";
+import type { Store } from "@/types";
 
 // ── Template chips ──────────────────────────────────────────
 
@@ -66,19 +65,14 @@ interface PreviewStepProps {
   onBack: () => void;
 }
 
-const POLL_INTERVAL_MS = 3_000;
-const POLL_TIMEOUT_MS = 90_000;
-
 export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
-  const [crawling, setCrawling] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [subject, setSubject] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [templates, setTemplates] = useState<TemplateChip[]>(DEFAULT_CHIPS);
+  const [templates, setTemplates] = useState<TemplateChip[] | null>(null);
   const [inputText, setInputText] = useState("");
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState(false);
@@ -86,84 +80,47 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
 
   const threadEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController>(null);
-  const pollStartRef = useRef(0);
 
-  // Fetch store data — if website_pages not ready, start polling
+  // Fetch store data + personalized templates in parallel
   useEffect(() => {
-    const fetchStore = async () => {
+    const init = async () => {
       try {
         const res = await fetch(`/api/stores/${storeId}`);
         if (!res.ok) return;
         const data = (await res.json()) as { data: Store };
         setStore(data.data);
-
-        const pages = data.data.website_pages as WebsitePage[] | null;
-        if (!pages || pages.length === 0) {
-          setCrawling(true);
-          pollStartRef.current = Date.now();
-        } else {
-          // Pages ready — fetch personalized templates
-          void fetchTemplates();
-        }
       } catch {
         // silently fail
       } finally {
         setLoading(false);
+        void fetchTemplates();
       }
     };
-    void fetchStore();
+    void init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
-  // Poll while crawling is in progress
-  useEffect(() => {
-    if (!crawling) return;
-
-    const interval = setInterval(async () => {
-      const elapsed = Date.now() - pollStartRef.current;
-
-      if (elapsed > POLL_TIMEOUT_MS) {
-        setCrawling(false);
-        setProgress(100);
-        void fetchTemplates();
-        clearInterval(interval);
-        return;
-      }
-
-      // Smooth progress — fast at first, slows down
-      setProgress(Math.min(90, (elapsed / POLL_TIMEOUT_MS) * 120));
-
+  const fetchTemplates = async (retries = 3, delay = 2000) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const res = await fetch(`/api/stores/${storeId}`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { data: Store };
-        setStore(data.data);
-
-        const pages = data.data.website_pages as WebsitePage[] | null;
-        if (pages && pages.length > 0) {
-          setProgress(100);
-          setTimeout(() => setCrawling(false), 600);
-          void fetchTemplates();
-          clearInterval(interval);
-        }
-      } catch {
-        // keep polling
-      }
-    }, POLL_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crawling, storeId]);
-
-  const fetchTemplates = () =>
-    fetch(`/api/stores/${storeId}/preview/templates`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { templates: TemplateChip[] } | null) => {
+        const res = await fetch(`/api/stores/${storeId}/preview/templates`);
+        if (!res.ok) continue;
+        const data = (await res.json()) as { templates: TemplateChip[] } | null;
         if (data?.templates && data.templates.length > 0) {
           setTemplates(data.templates);
+          return;
         }
-      })
-      .catch(() => {});
+      } catch {
+        // continue retrying
+      }
+      // If not the last attempt, wait before retrying (background generation may still be running)
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+    // All retries exhausted — fall back to defaults
+    setTemplates(DEFAULT_CHIPS);
+  };
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -264,42 +221,6 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-[420px] w-full rounded-2xl" />
-      </div>
-    );
-  }
-
-  if (crawling) {
-    return (
-      <div className="flex min-h-[480px] flex-col items-center justify-center py-10">
-        {/* Pulsing globe */}
-        <div className="relative mb-8">
-          <div className="absolute inset-0 animate-ping rounded-full bg-mk-accent/10" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent/10 to-mk-accent/5 ring-1 ring-mk-accent/20">
-            <Globe className="h-7 w-7 text-mk-accent animate-[spin_6s_linear_infinite]" />
-          </div>
-        </div>
-
-        {/* Copy */}
-        <h2 className="font-heading text-2xl text-mk-text animate-in fade-in slide-in-from-bottom-2 duration-500">
-          Checking out your site
-        </h2>
-        <p className="mt-2 text-sm text-mk-text-muted animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
-          {progress < 40
-            ? "Reading your pages…"
-            : progress < 75
-              ? "Learning about your products…"
-              : "Almost done…"}
-        </p>
-
-        {/* Progress bar */}
-        <div className="mt-8 w-full max-w-xs animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
-          <div className="h-1 overflow-hidden rounded-full bg-mk-border/60">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-mk-accent to-[#E0A060] transition-all duration-700 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
       </div>
     );
   }
@@ -542,16 +463,24 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
             <span className="text-xs text-mk-text-muted">
               or choose from a template:
             </span>
-            {templates.map((t) => (
-              <button
-                key={t.label}
-                onClick={() => handleTemplateClick(t)}
-                disabled={thinking}
-                className="rounded-full border border-mk-border bg-white px-3 py-1.5 text-xs font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent"
-              >
-                {t.label}
-              </button>
-            ))}
+            {templates === null ? (
+              <>
+                <Skeleton className="h-7 w-28 rounded-full" />
+                <Skeleton className="h-7 w-32 rounded-full" />
+                <Skeleton className="h-7 w-24 rounded-full" />
+              </>
+            ) : (
+              templates.map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => handleTemplateClick(t)}
+                  disabled={thinking}
+                  className="rounded-full border border-mk-border bg-white px-3 py-1.5 text-xs font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent animate-in fade-in duration-300"
+                >
+                  {t.label}
+                </button>
+              ))
+            )}
           </div>
         )}
       </div>
