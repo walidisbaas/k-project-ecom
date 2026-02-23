@@ -23,3 +23,4 @@ export const openrouter: OpenAI = new Proxy({} as OpenAI, {
 });
 
 export const PREVIEW_MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
+export const PREVIEW_CHAT_MODEL = "anthropic/claude-sonnet-4.6";

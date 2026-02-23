@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { openrouter, PREVIEW_MODEL } from "@/lib/openrouter/client";
+import { openrouter, PREVIEW_MODEL, PREVIEW_CHAT_MODEL } from "@/lib/openrouter/client";
 import { buildPreviewSystemPrompt } from "@/lib/openrouter/prompts";
 
 export const maxDuration = 30;
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   try {
     const response = await openrouter.chat.completions.create({
-      model: PREVIEW_MODEL,
+      model: PREVIEW_CHAT_MODEL,
       messages: [{ role: "system", content: systemPrompt }, ...chatMessages],
       temperature: 0.4,
       max_tokens: 600,

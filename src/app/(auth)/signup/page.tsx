@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Check } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Navigate after the success animation plays
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => {
+      router.push("/stores");
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, [success, router]);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +36,8 @@ export default function SignupPage() {
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error("Failed to sign in");
-      router.push("/stores");
+      setSuccess(true);
     } catch {
-      // Failed to sign in
-    } finally {
       setLoading(false);
     }
   };
@@ -49,6 +57,36 @@ export default function SignupPage() {
       setGoogleLoading(false);
     }
   };
+
+  // ── Success transition ──
+  if (success) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="flex flex-col items-center auth-success-enter">
+          {/* Animated checkmark */}
+          <div className="auth-success-ring relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15]">
+            <Check className="h-10 w-10 text-white auth-success-check" strokeWidth={3} />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15] auth-success-pulse" />
+          </div>
+
+          {/* Welcome text */}
+          <h1 className="mt-8 font-heading text-3xl text-mk-text auth-success-text-1 sm:text-4xl">
+            Welcome to Kenso
+          </h1>
+          <p className="mt-3 text-base text-mk-text-muted auth-success-text-2">
+            Setting up your workspace...
+          </p>
+
+          {/* Loading dots */}
+          <div className="mt-6 flex gap-1.5 auth-success-text-2">
+            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
