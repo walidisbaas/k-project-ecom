@@ -22,4 +22,4 @@ export const openrouter: OpenAI = new Proxy({} as OpenAI, {
   },
 });
 
-export const PREVIEW_MODEL = "openai/gpt-4.1";
+export const PREVIEW_MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";

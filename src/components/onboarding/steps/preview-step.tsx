@@ -465,9 +465,18 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
             </span>
             {templates === null ? (
               <>
-                <Skeleton className="h-7 w-28 rounded-full" />
-                <Skeleton className="h-7 w-32 rounded-full" />
-                <Skeleton className="h-7 w-24 rounded-full" />
+                {[112, 144, 96].map((w, i) => (
+                  <div
+                    key={i}
+                    className="relative h-7 overflow-hidden rounded-full border border-mk-border/50 bg-mk-border/10"
+                    style={{ width: w, animationDelay: `${i * 100}ms` }}
+                  >
+                    <div
+                      className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-mk-border/30 to-transparent"
+                      style={{ animationDelay: `${i * 200}ms` }}
+                    />
+                  </div>
+                ))}
               </>
             ) : (
               templates.map((t) => (

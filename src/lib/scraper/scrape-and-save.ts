@@ -7,24 +7,36 @@ import * as cheerio from "cheerio";
 import type { Json, WebsitePage } from "@/types";
 
 /**
- * Capture a screenshot of the store's website and save it.
- * The page crawl for AI context runs in the background — it does NOT
- * block the screenshot or the user's ability to proceed.
+ * Three-level pipeline — each level saves to DB as soon as it finishes.
  *
- * Sets scrape_status to "scraping" → "complete" once the screenshot is done.
+ * Level 1: Screenshot        (~3-5s)  — awaited, runs in parallel with Level 2
+ * Level 2: Landing + templates (~5-10s) — awaited, saves website_pages + scrape_data.templates
+ * Level 3: Footer + products  (~15-30s) — fire-and-forget, best-effort enrichment
+ *
+ * Called inside after() from the scrape route, so Vercel keeps the function alive.
+ * Only Level 1 + 2 must complete; Level 3 is optional.
  */
 export async function scrapeAndSaveToStore(
   storeId: string,
   websiteUrl: string
 ): Promise<void> {
+  const baseUrl = websiteUrl.replace(/\/$/, "");
+
   await supabaseAdmin
     .from("stores")
     .update({ scrape_status: "scraping" })
     .eq("id", storeId);
 
   try {
-    // 1. Capture screenshot (this is what the user waits for)
-    const screenshotUrl = await captureScreenshot(websiteUrl);
+    // ── Level 1 + Level 2: run in parallel ───────────────────
+    const [screenshotResult, landingResult] = await Promise.allSettled([
+      captureScreenshot(websiteUrl),
+      firecrawl.scrape(baseUrl, { formats: ["markdown", "rawHtml"] }),
+    ]);
+
+    // ── Level 1: Save screenshot ─────────────────────────────
+    const screenshotUrl =
+      screenshotResult.status === "fulfilled" ? screenshotResult.value : null;
 
     await supabaseAdmin
       .from("stores")
@@ -35,16 +47,53 @@ export async function scrapeAndSaveToStore(
       })
       .eq("id", storeId);
 
-    // 2. Crawl pages in the background — fire and forget
-    //    User can already proceed; this data is used later in the preview step.
-    crawlAndGenerateTemplates(storeId, websiteUrl).catch((err) => {
-      console.error("[scrapeAndSaveToStore] Background crawl failed:", {
-        storeId,
-        error: err instanceof Error ? err.message : "unknown",
+    // ── Level 2: Save landing page + generate templates ──────
+    let landingPage: WebsitePage | null = null;
+    let footerHtml = "";
+
+    if (landingResult.status === "fulfilled") {
+      const result = landingResult.value;
+      const md = (result.markdown ?? "").slice(0, 15000);
+
+      if (md.length > 0) {
+        landingPage = {
+          url: result.metadata?.sourceURL ?? baseUrl,
+          title: result.metadata?.title ?? "",
+          markdown: md,
+        };
+      }
+      footerHtml = result.rawHtml ?? "";
+    } else {
+      console.error("[crawl] Landing page scrape failed:", {
+        error:
+          landingResult.reason instanceof Error
+            ? landingResult.reason.message
+            : "unknown",
       });
-    });
+    }
+
+    if (landingPage) {
+      // Save landing page to DB immediately
+      await supabaseAdmin
+        .from("stores")
+        .update({ website_pages: [landingPage] as unknown as Json })
+        .eq("id", storeId);
+
+      // Generate templates — must complete before function exits
+      await generateAndCacheTemplates(storeId, [landingPage]);
+    }
+
+    // ── Level 3: Footer + products — fire-and-forget ─────────
+    if (landingPage && footerHtml) {
+      scrapeExtraPages(storeId, baseUrl, footerHtml).catch((err) => {
+        console.error("[scrapeAndSaveToStore] Extra page scrape failed:", {
+          storeId,
+          error: err instanceof Error ? err.message : "unknown",
+        });
+      });
+    }
   } catch (error) {
-    console.error("[scrapeAndSaveToStore] Screenshot failed:", {
+    console.error("[scrapeAndSaveToStore] Failed:", {
       storeId,
       websiteUrl,
       error: error instanceof Error ? error.message : "unknown",
@@ -60,53 +109,14 @@ export async function scrapeAndSaveToStore(
 }
 
 /**
- * Three-level crawl pipeline:
- *   Level 1 (screenshot) is already done by the caller.
- *   Level 2: Scrape landing page → save immediately + generate templates in parallel.
- *   Level 3: Scrape footer/policy pages + products.json → append to website_pages.
+ * Level 3: Scrape footer links + products.json, append to website_pages.
+ * Best-effort — if Vercel kills the function, Level 1+2 data is already saved.
  */
-async function crawlAndGenerateTemplates(
+async function scrapeExtraPages(
   storeId: string,
-  websiteUrl: string
+  baseUrl: string,
+  footerHtml: string
 ): Promise<void> {
-  const baseUrl = websiteUrl.replace(/\/$/, "");
-
-  // ── Level 2: Landing page (fast) ─────────────────────────
-  let landingPage: WebsitePage | null = null;
-  let footerHtml = "";
-
-  try {
-    const result = await firecrawl.scrape(baseUrl, {
-      formats: ["markdown", "rawHtml"],
-    });
-
-    const md = (result.markdown ?? "").slice(0, 15000);
-    if (md.length > 0) {
-      landingPage = {
-        url: result.metadata?.sourceURL ?? baseUrl,
-        title: result.metadata?.title ?? "",
-        markdown: md,
-      };
-    }
-    footerHtml = result.rawHtml ?? "";
-  } catch (err) {
-    console.error("[crawl] Landing page scrape failed:", {
-      error: err instanceof Error ? err.message : "unknown",
-    });
-  }
-
-  if (!landingPage) return;
-
-  // Save landing page to DB immediately so the templates API can use it
-  await supabaseAdmin
-    .from("stores")
-    .update({ website_pages: [landingPage] as unknown as Json })
-    .eq("id", storeId);
-
-  // Generate templates in parallel — don't await
-  void generateAndCacheTemplates(storeId, [landingPage]);
-
-  // ── Level 3: Footer pages + products (slow, background) ──
   const extraPages: WebsitePage[] = [];
   const footerLinks = extractFooterLinks(footerHtml, baseUrl);
 
@@ -210,8 +220,6 @@ async function fetchProductsJson(baseUrl: string): Promise<WebsitePage | null> {
 
 /**
  * Generate 3 personalized template chips from website content and cache them.
- * Fires as early as possible (right after landing page) so they're ready
- * by the time the user reaches the preview step.
  */
 async function generateAndCacheTemplates(
   storeId: string,
