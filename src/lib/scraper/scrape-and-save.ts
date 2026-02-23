@@ -9,9 +9,9 @@ import type { Json, WebsitePage } from "@/types";
 /**
  * Three-level pipeline — each level saves to DB as soon as it finishes.
  *
- * Level 1: Screenshot        (~3-5s)  — awaited, runs in parallel with Level 2
- * Level 2: Landing + templates (~5-10s) — awaited, saves website_pages + scrape_data.templates
- * Level 3: Footer + products  (~15-30s) — fire-and-forget, best-effort enrichment
+ * Level 1: Screenshot + favicon (~3-5s) — awaited, runs in parallel with Level 2
+ * Level 2: Landing + templates  (~5-10s) — awaited, saves website_pages + scrape_data.templates
+ * Level 3: Footer + products    (~15-30s) — fire-and-forget, best-effort enrichment
  *
  * Called inside after() from the scrape route, so Vercel keeps the function alive.
  * Only Level 1 + 2 must complete; Level 3 is optional.
@@ -29,20 +29,23 @@ export async function scrapeAndSaveToStore(
 
   try {
     // ── Level 1 + Level 2: run in parallel ───────────────────
-    const [screenshotResult, landingResult] = await Promise.allSettled([
+    const [screenshotResult, landingResult, faviconResult] = await Promise.allSettled([
       captureScreenshot(websiteUrl),
       firecrawl.scrape(baseUrl, { formats: ["markdown", "rawHtml"] }),
+      fetchFavicon(baseUrl),
     ]);
 
-    // ── Level 1: Save screenshot ─────────────────────────────
+    // ── Level 1: Save screenshot + favicon ───────────────────
     const screenshotUrl =
       screenshotResult.status === "fulfilled" ? screenshotResult.value : null;
+    const faviconUrl =
+      faviconResult.status === "fulfilled" ? faviconResult.value : null;
 
     await supabaseAdmin
       .from("stores")
       .update({
         scrape_status: "complete",
-        scrape_data: { screenshot_url: screenshotUrl } as unknown as Json,
+        scrape_data: { screenshot_url: screenshotUrl, favicon_url: faviconUrl } as unknown as Json,
         onboarding_step: 2,
       })
       .eq("id", storeId);
@@ -216,6 +219,63 @@ async function fetchProductsJson(baseUrl: string): Promise<WebsitePage | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Fetch the site's favicon URL. Tries common paths and <link> tag parsing.
+ * Returns an absolute URL string, or null if none found.
+ */
+async function fetchFavicon(baseUrl: string): Promise<string | null> {
+  // 1. Try fetching the homepage HTML and parsing <link rel="icon"> tags
+  try {
+    const res = await fetch(baseUrl, {
+      headers: { "User-Agent": "Kenso-AI/1.0" },
+      signal: AbortSignal.timeout(5000),
+      redirect: "follow",
+    });
+
+    if (res.ok) {
+      const html = await res.text();
+      const $ = cheerio.load(html);
+
+      // Look for link tags with icon rels
+      const iconLink = $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').first();
+      const href = iconLink.attr("href");
+
+      if (href) {
+        try {
+          const absolute = new URL(href, baseUrl).href;
+          // Verify it's reachable
+          const check = await fetch(absolute, {
+            method: "HEAD",
+            signal: AbortSignal.timeout(3000),
+            redirect: "follow",
+          });
+          if (check.ok) return absolute;
+        } catch {
+          // fall through to /favicon.ico
+        }
+      }
+    }
+  } catch {
+    // fall through
+  }
+
+  // 2. Fallback: try /favicon.ico directly
+  try {
+    const faviconUrl = `${baseUrl}/favicon.ico`;
+    const res = await fetch(faviconUrl, {
+      method: "HEAD",
+      headers: { "User-Agent": "Kenso-AI/1.0" },
+      signal: AbortSignal.timeout(3000),
+      redirect: "follow",
+    });
+    if (res.ok) return faviconUrl;
+  } catch {
+    // no favicon found
+  }
+
+  return null;
 }
 
 /**

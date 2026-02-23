@@ -132,6 +132,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
   }, [messages, thinking]);
 
   const storeName = store?.store_name || "Your Store";
+  const faviconUrl = (store?.scrape_data as Record<string, unknown> | null)?.favicon_url as string | null;
 
   const handleSend = useCallback(
     async (text?: string) => {
@@ -289,16 +290,25 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                     style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
                   >
                     {/* Avatar */}
-                    <div
-                      className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white shadow-sm sm:h-8 sm:w-8 sm:text-xs",
-                        isAi
-                          ? "bg-gradient-to-br from-mk-accent to-[#C44D15]"
-                          : "bg-gradient-to-br from-[#8C7B6A] to-[#6B5A49]"
-                      )}
-                    >
-                      {senderInitial}
-                    </div>
+                    {isAi && faviconUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={faviconUrl}
+                        alt={storeName}
+                        className="h-7 w-7 shrink-0 rounded-full object-cover shadow-sm sm:h-8 sm:w-8"
+                      />
+                    ) : (
+                      <div
+                        className={cn(
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white shadow-sm sm:h-8 sm:w-8 sm:text-xs",
+                          isAi
+                            ? "bg-gradient-to-br from-mk-accent to-[#C44D15]"
+                            : "bg-gradient-to-br from-[#8C7B6A] to-[#6B5A49]"
+                        )}
+                      >
+                        {senderInitial}
+                      </div>
+                    )}
                     {/* Sender name */}
                     <span className="w-[70px] shrink-0 truncate text-xs font-semibold text-mk-text sm:w-[120px] sm:text-sm">
                       {senderName}
@@ -331,16 +341,25 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                   >
                     <div className="flex items-start gap-2 sm:gap-3">
                       {/* Avatar */}
-                      <div
-                        className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm sm:h-10 sm:w-10 sm:text-sm",
-                          isAi
-                            ? "bg-gradient-to-br from-mk-accent to-[#C44D15]"
-                            : "bg-gradient-to-br from-[#8C7B6A] to-[#6B5A49]"
-                        )}
-                      >
-                        {senderInitial}
-                      </div>
+                      {isAi && faviconUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={faviconUrl}
+                          alt={storeName}
+                          className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm sm:h-10 sm:w-10"
+                        />
+                      ) : (
+                        <div
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm sm:h-10 sm:w-10 sm:text-sm",
+                            isAi
+                              ? "bg-gradient-to-br from-mk-accent to-[#C44D15]"
+                              : "bg-gradient-to-br from-[#8C7B6A] to-[#6B5A49]"
+                          )}
+                        >
+                          {senderInitial}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           <p className="text-xs font-semibold text-mk-text sm:text-sm">
@@ -380,9 +399,18 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
             {/* Thinking indicator */}
             {thinking && (
               <div className="flex items-center gap-2 border-t border-mk-border/40 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15] text-[10px] font-semibold text-white shadow-sm sm:h-8 sm:w-8 sm:text-xs">
-                  {storeName.charAt(0).toUpperCase()}
-                </div>
+                {faviconUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={faviconUrl}
+                    alt={storeName}
+                    className="h-7 w-7 shrink-0 rounded-full object-cover shadow-sm sm:h-8 sm:w-8"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15] text-[10px] font-semibold text-white shadow-sm sm:h-8 sm:w-8 sm:text-xs">
+                    {storeName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-mk-text">
                     {storeName}
