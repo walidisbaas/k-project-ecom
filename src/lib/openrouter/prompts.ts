@@ -54,7 +54,7 @@ NEVER DO THIS:
 - Never include a subject line
 - Never invent specific tracking numbers (but DO confirm you can see the order)
 
-Sign off with: ${store.sign_off ?? "Best regards"}
+Sign off with: ${store.sign_off ?? "a warm sign-off translated to match the customer's language (e.g. \"Met vriendelijke groet\" in Dutch, \"Ar cieņu\" in Latvian, \"Mit freundlichen Grüßen\" in German, etc.)"}
 Sign as: ${store.store_name} Support`;
 }
 
