@@ -7,6 +7,7 @@ import { StepIndicator } from "@/components/onboarding/step-indicator";
 import { CreateStoreStep } from "@/components/onboarding/steps/create-store-step";
 import { ConfirmStoreStep } from "@/components/onboarding/steps/confirm-store-step";
 import { PreviewStep } from "@/components/onboarding/steps/preview-step";
+import { PolicyConfigStep } from "@/components/onboarding/steps/policy-config-step";
 import { FeaturesOverviewStep } from "@/components/onboarding/steps/features-overview-step";
 import { GoLiveStep } from "@/components/onboarding/steps/go-live-step";
 import { cn } from "@/lib/utils";
@@ -40,8 +41,8 @@ function OnboardingWizardContent() {
             return;
           }
 
-          // DB steps 1-4 map to UI steps 2-5; clamp old steps to 4 (Features Overview)
-          const dbStep = Math.min(Math.max(store.onboarding_step ?? 1, 1), 4);
+          // DB steps 1-5 map to UI steps 2-6; clamp old steps to 5 (Go Live)
+          const dbStep = Math.min(Math.max(store.onboarding_step ?? 1, 1), 5);
           setCurrentStep(dbStep + 1);
           initialStepSet.current = true;
         }
@@ -88,7 +89,7 @@ function OnboardingWizardContent() {
     );
   }
 
-  // Steps 1-5: onboarding wizard
+  // Steps 1-6: onboarding wizard
   const stepContent: Record<number, React.ReactNode> = {
     1: <CreateStoreStep onCreated={handleStoreCreated} />,
     2: (
@@ -99,19 +100,26 @@ function OnboardingWizardContent() {
       />
     ),
     3: (
-      <PreviewStep
+      <PolicyConfigStep
         storeId={storeId!}
         onNext={() => goToStep(4)}
         onBack={() => goToStep(2)}
       />
     ),
     4: (
-      <FeaturesOverviewStep
+      <PreviewStep
+        storeId={storeId!}
         onNext={() => goToStep(5)}
         onBack={() => goToStep(3)}
       />
     ),
-    5: <GoLiveStep storeId={storeId!} onBack={() => goToStep(4)} />,
+    5: (
+      <FeaturesOverviewStep
+        onNext={() => goToStep(6)}
+        onBack={() => goToStep(4)}
+      />
+    ),
+    6: <GoLiveStep storeId={storeId!} onBack={() => goToStep(5)} />,
   };
 
   return (

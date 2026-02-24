@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS stores (
     CHECK (scrape_status IN ('pending', 'scraping', 'complete', 'failed')),
   scrape_data JSONB,
   website_pages JSONB,
+  store_policies JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

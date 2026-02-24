@@ -1,5 +1,5 @@
 import type { ChatCompletionMessageParam } from "openai/resources";
-import type { Intent, ShopifyOrder, StoreFaq, StoreRule, Store } from "@/types";
+import type { Intent, ShopifyOrder, StoreFaq, StorePolicies, StoreRule, Store } from "@/types";
 
 /**
  * Prompt for intent classification.
@@ -49,6 +49,7 @@ export function buildSystemPrompt(
     | "shipping_policy"
     | "return_policy"
     | "sign_off"
+    | "store_policies"
   >,
   faqs: StoreFaq[],
   rules: StoreRule[]
@@ -68,6 +69,37 @@ export function buildSystemPrompt(
     .map((f) => `Q: ${f.question}\nA: ${f.answer}`)
     .join("\n\n");
 
+  const policies = store.store_policies as StorePolicies | null;
+  let policySection = "";
+  if (policies) {
+    const lines: string[] = [
+      "STORE POLICIES — HARD RULES:",
+      `- Average shipping time: ${policies.shipping_days} day${policies.shipping_days !== 1 ? "s" : ""}`,
+      `- Target response interval: ${policies.response_interval_hours} hour${policies.response_interval_hours !== 1 ? "s" : ""}`,
+    ];
+
+    if (policies.trade_ins_enabled) {
+      lines.push("- Trade-ins: accepted");
+      lines.push(
+        policies.receive_old_items
+          ? "- Receive old items: yes"
+          : "- Receive old items: no"
+      );
+    }
+
+    if (policies.prevent_refunds) {
+      lines.push("- Refund prevention: active — always try to retain the customer before offering a refund");
+      if (policies.offer_vouchers)
+        lines.push("- Offer store credit/vouchers as the first alternative to refunds");
+      if (policies.offer_partial_refunds)
+        lines.push(
+          `- Offer ${policies.partial_refund_percentage}% partial refund before offering a full refund`
+        );
+    }
+
+    policySection = lines.join("\n") + "\n";
+  }
+
   return `You are a customer support agent for ${store.company_summary ?? "an online store"}.
 
 BRAND VOICE:
@@ -77,7 +109,7 @@ ${doRules ? `RULES — ALWAYS DO:\n${doRules}\n` : ""}
 ${dontRules ? `RULES — NEVER DO:\n${dontRules}\n` : ""}
 ${store.shipping_policy ? `SHIPPING POLICY:\n${store.shipping_policy}\n` : ""}
 ${store.return_policy ? `RETURN POLICY:\n${store.return_policy}\n` : ""}
-${faqSection ? `FREQUENTLY ASKED QUESTIONS:\n${faqSection}\n` : ""}
+${policySection}${faqSection ? `FREQUENTLY ASKED QUESTIONS:\n${faqSection}\n` : ""}
 
 CRITICAL INSTRUCTIONS:
 - Reply in the same language the customer writes in.

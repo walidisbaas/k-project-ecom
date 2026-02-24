@@ -63,6 +63,18 @@ export interface AiConfig {
   business_hours: BusinessHours | null;
 }
 
+export interface StorePolicies {
+  shipping_days: number; // 1 | 2 | 7 | 14
+  response_interval_hours: number; // 1 | 2 | 4 | 8
+  trade_ins_enabled: boolean;
+  receive_old_items: boolean; // only relevant if trade_ins_enabled
+  average_cogs: number; // free input, default 10
+  prevent_refunds: boolean;
+  offer_vouchers: boolean; // only relevant if prevent_refunds
+  offer_partial_refunds: boolean; // only relevant if prevent_refunds
+  partial_refund_percentage: number; // 10 | 20 | 30
+}
+
 export interface Store {
   id: string;
   merchant_id: string;
@@ -82,6 +94,7 @@ export interface Store {
   scrape_status: "pending" | "scraping" | "complete" | "failed";
   scrape_data: Json | null;
   website_pages: WebsitePage[] | null;
+  store_policies: StorePolicies | null;
   created_at: string;
   updated_at: string;
 }
@@ -337,6 +350,7 @@ export interface UpdateStoreRequest {
   primary_language?: string;
   sign_off?: string;
   auto_send?: boolean;
+  store_policies?: StorePolicies;
 }
 
 export interface CreateFaqRequest {

@@ -5,7 +5,7 @@ import { openrouter, PREVIEW_MODEL, PREVIEW_CHAT_MODEL } from "@/lib/openrouter/
 import { buildPreviewSystemPrompt } from "@/lib/openrouter/prompts";
 
 export const maxDuration = 30;
-import type { Json, WebsitePage, PreviewThreadMessage } from "@/types";
+import type { Json, WebsitePage, StorePolicies, PreviewThreadMessage } from "@/types";
 import { z } from "zod";
 
 type Params = { params: Promise<{ storeId: string }> };
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: store } = await supabaseAdmin
     .from("stores")
-    .select("id, store_name, website_url, sign_off, website_pages")
+    .select("id, store_name, website_url, sign_off, website_pages, store_policies")
     .eq("id", storeId)
     .eq("merchant_id", user.id)
     .single();
@@ -65,7 +65,8 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const pages = (store.website_pages ?? []) as WebsitePage[];
-  const systemPrompt = buildPreviewSystemPrompt(store, pages);
+  const policies = (store.store_policies ?? null) as StorePolicies | null;
+  const systemPrompt = buildPreviewSystemPrompt(store, pages, policies);
 
   const chatMessages = parsed.data.messages.map((msg) => ({
     role: (msg.role === "customer" ? "user" : "assistant") as

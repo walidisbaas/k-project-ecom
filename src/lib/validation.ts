@@ -33,6 +33,21 @@ export const updateStoreSchema = z.object({
 });
 
 // ============================================================
+// Store policies
+// ============================================================
+export const storePoliciesSchema = z.object({
+  shipping_days: z.number().refine((v) => [1, 2, 7, 14].includes(v)),
+  response_interval_hours: z.number().refine((v) => [1, 2, 4, 8].includes(v)),
+  trade_ins_enabled: z.boolean(),
+  receive_old_items: z.boolean(),
+  average_cogs: z.number().min(0).max(100000),
+  prevent_refunds: z.boolean(),
+  offer_vouchers: z.boolean(),
+  offer_partial_refunds: z.boolean(),
+  partial_refund_percentage: z.number().refine((v) => [10, 20, 30].includes(v)),
+});
+
+// ============================================================
 // FAQs
 // ============================================================
 export const createFaqSchema = z.object({
