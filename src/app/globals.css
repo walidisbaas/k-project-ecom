@@ -363,3 +363,13 @@
 @utility animate-shimmer {
   animation: shimmer 1.8s ease-in-out infinite;
 }
+
+@keyframes text-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@utility animate-text-shimmer {
+  background-size: 200% 100%;
+  animation: text-shimmer 2s ease-in-out infinite;
+}

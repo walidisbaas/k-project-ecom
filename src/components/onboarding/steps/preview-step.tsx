@@ -411,26 +411,12 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                     {storeName.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <span className="text-sm font-semibold text-mk-text">
                     {storeName}
                   </span>
-                  <div className="flex gap-1">
-                    <span
-                      className="h-1.5 w-1.5 rounded-full bg-mk-accent/40 animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="h-1.5 w-1.5 rounded-full bg-mk-accent/40 animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="h-1.5 w-1.5 rounded-full bg-mk-accent/40 animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                  <span className="text-xs text-mk-text-muted">
-                    typing…
+                  <span className="animate-text-shimmer bg-gradient-to-r from-mk-accent via-[#F5A623] to-mk-accent bg-clip-text text-[11px] font-medium text-transparent">
+                    crafting reply…
                   </span>
                 </div>
               </div>
