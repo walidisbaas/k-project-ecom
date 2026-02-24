@@ -59,6 +59,7 @@ function OnboardingWizardContent() {
     (step: number) => {
       setDirection(step > currentStep ? "forward" : "backward");
       setCurrentStep(step);
+      window.scrollTo(0, 0);
     },
     [currentStep]
   );
@@ -71,6 +72,7 @@ function OnboardingWizardContent() {
     window.history.replaceState(null, "", `/onboarding?store_id=${newStoreId}`);
     setDirection("forward");
     setCurrentStep(2);
+    window.scrollTo(0, 0);
   }, []);
 
   if (loading) {

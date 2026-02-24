@@ -237,13 +237,13 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
   const hasAiReply = messages.some((m) => m.role === "ai");
 
   return (
-    <div className="px-4 py-6 sm:px-0 sm:py-10">
+    <div className="py-6 sm:py-10">
       {/* Header */}
       <div className="text-center onboarding-stagger-1">
-        <h1 className="font-heading text-2xl leading-tight text-mk-text sm:text-4xl md:text-5xl">
+        <h1 className="font-heading text-3xl leading-tight text-mk-text sm:text-5xl">
           See your AI agent in action
         </h1>
-        <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-mk-text-muted sm:mt-4 sm:text-lg">
+        <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-mk-text-muted sm:mt-4 sm:text-lg">
           Write an email and see how Kenso responds using your website data.
         </p>
       </div>
@@ -311,11 +311,11 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                       </div>
                     )}
                     {/* Sender name */}
-                    <span className="w-[70px] shrink-0 truncate text-xs font-semibold text-mk-text sm:w-[120px] sm:text-sm">
+                    <span className="w-[70px] shrink-0 truncate text-sm font-semibold text-mk-text sm:w-[120px]">
                       {senderName}
                     </span>
                     {/* Snippet */}
-                    <span className="min-w-0 flex-1 truncate text-xs text-mk-text-muted sm:text-sm">
+                    <span className="min-w-0 flex-1 truncate text-sm text-mk-text-muted">
                       {getSnippet(msg.text)}
                     </span>
                     {/* Timestamp */}
@@ -389,7 +389,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                       isLast ? "pb-5 sm:pb-6" : "pb-4 sm:pb-5"
                     )}
                   >
-                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-mk-text-secondary sm:text-sm">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-mk-text-secondary">
                       {msg.text}
                     </p>
                   </div>
@@ -471,7 +471,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
             }
             disabled={thinking}
             className={cn(
-              "w-full resize-none rounded-xl border border-mk-border/80 bg-white px-3 py-2.5 pr-12 text-xs leading-relaxed text-mk-text shadow-[0_1px_3px_rgba(26,18,7,0.04),0_4px_20px_rgba(26,18,7,0.06)] placeholder:text-mk-text-muted transition-all focus:border-mk-accent focus:outline-none focus:ring-1 focus:ring-mk-accent/30 focus:shadow-[0_1px_3px_rgba(26,18,7,0.04),0_4px_20px_rgba(26,18,7,0.06),0_0_0_3px_rgba(224,90,26,0.08)] sm:rounded-2xl sm:px-4 sm:py-3 sm:pr-14 sm:text-sm",
+              "w-full resize-none rounded-xl border border-mk-border/80 bg-white px-3 py-2.5 pr-12 text-sm leading-relaxed text-mk-text shadow-[0_1px_3px_rgba(26,18,7,0.04),0_4px_20px_rgba(26,18,7,0.06)] placeholder:text-mk-text-muted transition-all focus:border-mk-accent focus:outline-none focus:ring-1 focus:ring-mk-accent/30 focus:shadow-[0_1px_3px_rgba(26,18,7,0.04),0_4px_20px_rgba(26,18,7,0.06),0_0_0_3px_rgba(224,90,26,0.08)] sm:rounded-2xl sm:px-4 sm:py-3 sm:pr-14",
               thinking && "opacity-60 cursor-not-allowed"
             )}
           />
@@ -493,14 +493,14 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
         {/* Follow-up suggestions — shown after AI replies */}
         {hasMessages && !thinking && suggestions.length > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <span className="text-[11px] text-mk-text-muted sm:text-xs">
+            <span className="text-xs text-mk-text-muted">
               or reply with:
             </span>
             {suggestions.map((s, i) => (
               <button
                 key={i}
                 onClick={() => setInputText(s.full)}
-                className="rounded-full border border-mk-border bg-white px-2.5 py-1 text-[11px] font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent sm:px-3 sm:py-1.5 sm:text-xs animate-in fade-in duration-300"
+                className="rounded-full border border-mk-border bg-white px-2.5 py-1 text-xs font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent sm:px-3 sm:py-1.5 animate-in fade-in duration-300"
                 style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
               >
                 {s.label}
@@ -512,7 +512,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
         {/* Template chips — only when empty */}
         {!hasMessages && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2 onboarding-stagger-4">
-            <span className="text-[11px] text-mk-text-muted sm:text-xs">
+            <span className="text-xs text-mk-text-muted">
               or choose:
             </span>
             {templates === null ? (
@@ -536,7 +536,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
                   key={t.label}
                   onClick={() => handleTemplateClick(t)}
                   disabled={thinking}
-                  className="rounded-full border border-mk-border bg-white px-2.5 py-1 text-[11px] font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent sm:px-3 sm:py-1.5 sm:text-xs animate-in fade-in duration-300"
+                  className="rounded-full border border-mk-border bg-white px-2.5 py-1 text-xs font-medium text-mk-text-secondary transition-colors hover:border-mk-accent/40 hover:text-mk-accent sm:px-3 sm:py-1.5 animate-in fade-in duration-300"
                 >
                   {t.label}
                 </button>
@@ -548,7 +548,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
 
       {/* Navigation */}
       <div className="mx-auto mt-6 flex max-w-2xl justify-between gap-3 sm:mt-10 onboarding-stagger-3">
-        <Button variant="outline" size="lg" onClick={onBack} className="h-10 text-sm sm:h-12 sm:text-base">
+        <Button variant="outline" size="lg" onClick={onBack} className="h-10 text-base sm:h-12">
           <ArrowLeft className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
           Back
         </Button>
@@ -557,7 +557,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
           disabled={!hasAiReply}
           size="lg"
           className={cn(
-            "h-10 text-sm sm:h-12 sm:text-base transition-colors",
+            "h-10 text-base sm:h-12 transition-colors",
             hasAiReply
               ? "bg-mk-accent hover:bg-mk-accent-hover"
               : "bg-mk-border/60 text-mk-text-muted cursor-not-allowed hover:bg-mk-border/60"

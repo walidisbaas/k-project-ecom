@@ -118,7 +118,7 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
               key={opt.key}
               onClick={() => setInterval(opt.key)}
               className={cn(
-                "relative z-10 rounded-full px-6 py-2 text-sm font-medium transition-colors duration-300",
+                "relative z-10 rounded-full px-6 py-2 text-base font-medium transition-colors duration-300 sm:text-sm",
                 interval === opt.key
                   ? "text-mk-text"
                   : "text-mk-text-muted hover:text-mk-accent/70"
@@ -131,7 +131,7 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
       </div>
 
       {/* Pricing cards */}
-      <div className="mx-auto mt-8 grid max-w-4xl gap-5 px-4 sm:grid-cols-3 sm:px-0 onboarding-stagger-3">
+      <div className="mx-auto mt-8 grid max-w-4xl gap-5 sm:grid-cols-3 onboarding-stagger-3">
         {PLAN_CARDS.map((card) => {
           const plan = PLANS[card.key];
           const price = plan.pricing[interval];
@@ -160,7 +160,7 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
 
               <div className="p-7">
                 <p className="text-lg font-bold text-mk-text">{card.title}</p>
-                <p className="mt-1 text-sm text-mk-text-muted">
+                <p className="mt-1 text-base text-mk-text-muted sm:text-sm">
                   {card.subtitle}
                 </p>
 
@@ -172,13 +172,13 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
                     <span className="text-base text-mk-text-muted">/mo</span>
                   </div>
                   {interval !== "monthly" && (
-                    <p className="mt-1.5 text-sm text-mk-text-muted">
+                    <p className="mt-1.5 text-base text-mk-text-muted sm:text-sm">
                       &euro;{price * (interval === "quarterly" ? 3 : 12)} billed{" "}
                       {interval === "quarterly" ? "every 3 months" : "annually"}
                     </p>
                   )}
                   {interval !== "monthly" && (
-                    <p className="mt-0.5 text-sm font-medium text-mk-green">
+                    <p className="mt-0.5 text-base font-medium text-mk-green sm:text-sm">
                       Save &euro;{(monthlyPrice - price) * 12}/year
                     </p>
                   )}
@@ -187,7 +187,7 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
                 <button
                   onClick={() => handleCheckout(plan.price_id_env)}
                   className={cn(
-                    "mt-6 w-full rounded-xl py-3 text-sm font-semibold transition-all",
+                    "mt-6 w-full rounded-xl py-3 text-base font-semibold transition-all sm:text-sm",
                     card.popular
                       ? "bg-gradient-to-r from-mk-accent to-[#C44D15] text-white shadow-[0_2px_8px_rgba(224,90,26,0.3)] hover:shadow-[0_4px_16px_rgba(224,90,26,0.4)]"
                       : "border border-mk-border bg-white text-mk-text hover:border-mk-text hover:bg-mk-text hover:text-white"
@@ -200,7 +200,7 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
                   {plan.features.map((f) => (
                     <li
                       key={f}
-                      className="flex items-start gap-2.5 text-sm text-mk-text-secondary"
+                      className="flex items-start gap-2.5 text-base text-mk-text-secondary sm:text-sm"
                     >
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-mk-green" />
                       {f}

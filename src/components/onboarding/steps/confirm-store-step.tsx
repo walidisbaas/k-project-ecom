@@ -141,7 +141,7 @@ export function ConfirmStoreStep({
   }
 
   return (
-    <div className="py-10">
+    <div className="py-4 sm:py-10">
       <div className="text-center onboarding-stagger-1">
         <h1 className="font-heading text-4xl leading-tight text-mk-text sm:text-5xl">
           Is this your store?
@@ -151,7 +151,7 @@ export function ConfirmStoreStep({
         </p>
       </div>
 
-      <div className="mx-auto mt-8 max-w-2xl onboarding-stagger-2">
+      <div className="mx-auto mt-5 max-w-2xl onboarding-stagger-2 sm:mt-8">
         {scraping || (screenshotUrl && !imageLoaded) ? (
           <div className="overflow-hidden rounded-2xl border border-mk-border bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-mk-border bg-mk-bg px-4 py-2.5">
@@ -203,7 +203,7 @@ export function ConfirmStoreStep({
             <p className="mt-4 text-lg font-medium text-mk-text">
               We couldn&apos;t reach your website
             </p>
-            <p className="mx-auto mt-2 max-w-md text-center text-sm leading-relaxed text-mk-text-muted">
+            <p className="mx-auto mt-2 max-w-md text-center text-base leading-relaxed text-mk-text-muted sm:text-sm">
               We tried to scan{" "}
               <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs text-mk-text-secondary">
                 {store?.website_url}
@@ -264,7 +264,7 @@ export function ConfirmStoreStep({
         )}
       </div>
 
-      <div className="mt-8 flex justify-between onboarding-stagger-3">
+      <div className="mt-5 flex justify-between onboarding-stagger-3 sm:mt-8">
         <Button variant="outline" size="lg" onClick={onBack} className="h-12">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back

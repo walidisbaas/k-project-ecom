@@ -30,7 +30,7 @@ export default async function OnboardingLayout({
           </span>
         </Link>
       </header>
-      <main className="mx-auto max-w-5xl px-8 pb-8 sm:pb-10">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 pb-8 sm:px-8 sm:pb-10">{children}</main>
     </div>
   );
 }

@@ -169,7 +169,7 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
   // ── Loading state ──
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-10rem)] flex-col items-center justify-center">
+      <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
         <div className="flex flex-col items-center">
           <div className={`h-44 w-44 ${exiting ? "animate-lottie-shrink" : "animate-lottie-grow"}`}>
             <DotLottieReact
@@ -181,7 +181,7 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
 
           <p
             key={textIndex}
-            className="mt-8 animate-fade-in bg-gradient-to-r from-mk-accent via-[#E8873A] to-[#C44D15] bg-clip-text text-center text-xl font-medium text-transparent"
+            className="mt-5 animate-fade-in bg-gradient-to-r from-mk-accent via-[#E8873A] to-[#C44D15] bg-clip-text text-center text-xl font-medium text-transparent sm:mt-8"
           >
             {LOADING_TEXTS[textIndex]}
           </p>
@@ -191,9 +191,9 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-10rem)] flex-col items-center justify-center">
+    <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
       <div className="w-full max-w-2xl text-center onboarding-stagger-1">
-        <div className="mx-auto mb-6 h-24 w-24">
+        <div className="mx-auto mb-4 h-24 w-24 sm:mb-6">
           <DotLottieReact
             src="https://lottie.host/acc1a2c9-d5a0-4f40-aece-dce57e0fba82/gatZAs7ixQ.lottie"
             loop
@@ -203,14 +203,12 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
         <h1 className="font-heading text-4xl leading-tight text-mk-text sm:text-5xl">
           Welcome to Kenso
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-mk-text-muted">
-          Set up your AI-powered customer support in minutes.
-          <br />
-          Enter your website URL to get started.
+        <p className="mx-auto mt-2 max-w-2xl text-lg leading-relaxed text-mk-text-muted sm:mt-4">
+          Set up your AI-powered customer support in minutes. Enter your website URL to get started.
         </p>
       </div>
 
-      <form onSubmit={handleCreate} className="mt-10 w-full max-w-lg space-y-6 onboarding-stagger-2">
+      <form onSubmit={handleCreate} className="mt-6 w-full max-w-lg space-y-4 onboarding-stagger-2 sm:mt-10 sm:space-y-6">
         <div>
           <Input
             type="text"
