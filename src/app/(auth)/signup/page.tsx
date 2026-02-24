@@ -69,7 +69,7 @@ export default function SignupPage() {
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="flex flex-col items-center auth-success-enter">
           {/* Animated loading loop */}
-          <div className={`h-28 w-28 ${exiting ? "animate-lottie-shrink" : "animate-lottie-grow"}`}>
+          <div className="h-28 w-28">
             <DotLottieReact
               src="https://lottie.host/acc1a2c9-d5a0-4f40-aece-dce57e0fba82/gatZAs7ixQ.lottie"
               loop

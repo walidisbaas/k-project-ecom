@@ -109,11 +109,12 @@ RULES:
   1. Order/delivery question (asking about shipping status of a recent order)
   2. Product question (asking about a specific product from the website)
   3. Return or issue (wanting to return/exchange something or reporting a problem)
+- IMPORTANT: The "label" MUST mention a specific product or item from the store. Never use generic labels like "Order status", "Product question", or "Return request". Instead reference what the customer actually bought or is asking about (e.g., "Waar is mijn acai bowl?", "Vraag over jullie smoothies", "Probleem met mijn poké bowl").
 
 Return ONLY a valid JSON array with exactly 3 objects. No markdown, no explanation:
 [
-  { "label": "short chip text (2-4 words)", "email": "full customer email text" },
-  { "label": "short chip text (2-4 words)", "email": "full customer email text" },
-  { "label": "short chip text (2-4 words)", "email": "full customer email text" }
+  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" },
+  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" },
+  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" }
 ]`;
 }
