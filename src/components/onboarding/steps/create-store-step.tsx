@@ -169,7 +169,7 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
   // ── Loading state ──
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
+      <div className="flex min-h-[calc(100dvh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
         <div className="flex flex-col items-center">
           <div className={`h-44 w-44 ${exiting ? "animate-lottie-shrink" : "animate-lottie-grow"}`}>
             <DotLottieReact
@@ -191,7 +191,7 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col items-center justify-center sm:min-h-[calc(100vh-10rem)]">
       <div className="w-full max-w-2xl text-center onboarding-stagger-1">
         <div className="mx-auto mb-4 h-24 w-24 sm:mb-6">
           <DotLottieReact

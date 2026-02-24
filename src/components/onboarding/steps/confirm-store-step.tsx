@@ -141,17 +141,17 @@ export function ConfirmStoreStep({
   }
 
   return (
-    <div className="py-4 sm:py-10">
+    <div className="py-2 sm:py-10">
       <div className="text-center onboarding-stagger-1">
         <h1 className="font-heading text-4xl leading-tight text-mk-text sm:text-5xl">
           Is this your store?
         </h1>
-        <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-mk-text-muted sm:text-xl">
+        <p className="mx-auto mt-2 max-w-3xl text-base leading-relaxed text-mk-text-muted sm:mt-4 sm:text-lg">
           We found <span className="font-medium text-mk-text-secondary">{store?.store_name}</span> — confirm this is correct so we can set up your AI agent.
         </p>
       </div>
 
-      <div className="mx-auto mt-5 max-w-2xl onboarding-stagger-2 sm:mt-8">
+      <div className="mx-auto mt-3 max-w-2xl onboarding-stagger-2 sm:mt-8">
         {scraping || (screenshotUrl && !imageLoaded) ? (
           <div className="overflow-hidden rounded-2xl border border-mk-border bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-mk-border bg-mk-bg px-4 py-2.5">
@@ -248,11 +248,11 @@ export function ConfirmStoreStep({
             <img
               src={screenshotUrl}
               alt={`Screenshot of ${store?.store_name}`}
-              className="w-full"
+              className="w-full max-h-[40dvh] object-cover object-top sm:max-h-none"
             />
           </div>
         ) : (
-          <div className="flex h-72 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-mk-border bg-white">
+          <div className="flex h-48 sm:h-72 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-mk-border bg-white">
             <Globe className="mb-4 h-10 w-10 text-mk-text-muted" />
             <p className="text-base font-medium text-mk-text-secondary">
               {store?.store_name}
@@ -264,7 +264,7 @@ export function ConfirmStoreStep({
         )}
       </div>
 
-      <div className="mt-5 flex justify-between onboarding-stagger-3 sm:mt-8">
+      <div className="mt-3 flex justify-between onboarding-stagger-3 sm:mt-8">
         <Button variant="outline" size="lg" onClick={onBack} className="h-12">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back

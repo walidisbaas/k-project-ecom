@@ -18,7 +18,7 @@ export default async function OnboardingLayout({
   }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-[100dvh]">
       <GradientBg />
       <header className="relative z-50 flex h-20 items-center justify-center">
         <Link href="/stores" className="flex items-center gap-2">

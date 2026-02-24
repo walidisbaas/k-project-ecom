@@ -23,7 +23,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
     : 0;
 
   return (
-    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-8 h-[2px] w-screen bg-mk-border/40">
+    <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-4 h-[2px] w-screen bg-mk-border/40 sm:mb-8">
       <div
         className="h-full bg-mk-accent transition-all duration-700 ease-out"
         style={{ width: `${progress}%` }}

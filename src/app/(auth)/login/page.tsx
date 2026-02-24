@@ -61,7 +61,7 @@ export default function LoginPage() {
   // ── Success transition ──
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="flex min-h-[100dvh] items-center justify-center px-4">
         <div className="flex flex-col items-center auth-success-enter">
           {/* Animated checkmark */}
           <div className="auth-success-ring relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15]">
@@ -89,9 +89,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-[100dvh] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center sm:mb-10">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="font-heading text-3xl text-mk-text">
               kenso
@@ -100,7 +100,7 @@ export default function LoginPage() {
               </sup>
             </span>
           </Link>
-          <h1 className="mt-8 font-heading text-3xl font-bold text-mk-text sm:text-4xl">
+          <h1 className="mt-5 font-heading text-3xl font-bold text-mk-text sm:mt-8 sm:text-4xl">
             Welcome back
           </h1>
           <p className="mt-3 text-base text-mk-text-muted">
@@ -108,7 +108,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-mk-border bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-mk-border bg-white p-6 shadow-sm sm:p-8">
               <Button
                 type="button"
                 variant="outline"
@@ -141,7 +141,7 @@ export default function LoginPage() {
                 Continue with Google
               </Button>
 
-              <div className="my-6 flex items-center gap-3">
+              <div className="my-4 flex items-center gap-3 sm:my-6">
                 <div className="h-px flex-1 bg-mk-border" />
                 <span className="text-sm text-mk-text-muted">or</span>
                 <div className="h-px flex-1 bg-mk-border" />
@@ -175,7 +175,7 @@ export default function LoginPage() {
               </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-mk-text-muted">
+        <p className="mt-4 text-center text-sm text-mk-text-muted sm:mt-6">
           Don&apos;t have an account?{" "}
           <Link
             href="/signup"
