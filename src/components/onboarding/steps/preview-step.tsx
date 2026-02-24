@@ -425,8 +425,10 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
             {/* Preview note — shown after first AI reply */}
             {messages.some((m) => m.role === "ai") && !thinking && (
               <div className="border-t border-mk-border/40 px-3 py-2.5 sm:px-5 sm:py-3 animate-in fade-in duration-500">
-                <p className="text-center text-[10px] leading-relaxed text-mk-text-muted/80 sm:text-[11px]">
-                  This is a preview based on your website. You can fine-tune your agent after setup.
+                <p className="text-center text-[10px] leading-relaxed sm:text-[11px]">
+                  <span className="bg-gradient-to-r from-mk-accent to-[#C44D15] bg-clip-text font-medium text-transparent">
+                    This is a preview based on your website. You can fine-tune your agent after setup.
+                  </span>
                 </p>
               </div>
             )}
