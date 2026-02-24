@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Loader2,
   Globe,
-  AlertCircle,
   RotateCcw,
 } from "lucide-react";
 import type { Store, ScrapeExtractResult } from "@/types";
@@ -197,19 +196,23 @@ export function ConfirmStoreStep({
             </div>
           </div>
         ) : scrapeFailed ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-mk-border bg-white px-6 py-10">
-            <AlertCircle className="mb-3 h-7 w-7 text-red-500" />
-            <p className="text-base font-medium text-mk-text">
-              Something went wrong
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-mk-border bg-white px-8 py-12">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-mk-accent-light">
+              <Globe className="h-6 w-6 text-mk-accent" />
+            </div>
+            <p className="mt-4 text-lg font-medium text-mk-text">
+              We couldn&apos;t reach your website
             </p>
-            <p className="mx-auto mt-2 max-w-sm text-center text-sm leading-relaxed text-mk-text-muted">
-              We couldn&apos;t reach{" "}
+            <p className="mx-auto mt-2 max-w-md text-center text-sm leading-relaxed text-mk-text-muted">
+              We tried to scan{" "}
               <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs text-mk-text-secondary">
                 {store?.website_url}
-              </span>
-              . Double check that this is the right domain and try again.
+              </span>{" "}
+              but weren&apos;t able to load it. This can happen with sites that block
+              automated access or require login. Double-check the URL is correct,
+              or try a different one.
             </p>
-            <div className="mt-5 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <Button variant="outline" size="sm" onClick={onBack}>
                 Change URL
               </Button>

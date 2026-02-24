@@ -102,14 +102,14 @@ TASK: Generate exactly 3 realistic customer support email templates based on thi
 RULES:
 - Use REAL product names, categories, or services from the website content above. Write product names how a normal person would say them, without trademark symbols (TM, (R)) or special characters.
 - Never use em dashes (--), ellipsis (...), or other AI-typical formatting. Use commas and periods like a real person.
-- Write in the SAME LANGUAGE as the website content (e.g., if the site is in Dutch, write Dutch emails).
+- CRITICAL LANGUAGE RULE: Detect the PRIMARY language of the website content above. ALL output — both "label" and "email" fields — MUST be written in that same language. If the website is in English, write everything in English. If the website is in Dutch, write everything in Dutch. Never mix languages. The label and the email within each template must always be in the same language.
 - Each email should be 2-3 sentences, casual and natural, like a real customer would write.
-- Each email should end with a name (e.g., "Thanks, Sarah" or "Groetjes, Emma").
+- Each email should end with a name (e.g., "Thanks, Sarah" or "Groetjes, Emma" — matching the detected language).
 - The 3 templates must cover these intents:
   1. Order/delivery question (asking about shipping status of a recent order)
   2. Product question (asking about a specific product from the website)
   3. Return or issue (wanting to return/exchange something or reporting a problem)
-- IMPORTANT: The "label" MUST mention a specific product or item from the store. Never use generic labels like "Order status", "Product question", or "Return request". Instead reference what the customer actually bought or is asking about (e.g., "Waar is mijn acai bowl?", "Vraag over jullie smoothies", "Probleem met mijn poké bowl").
+- IMPORTANT: The "label" MUST mention a specific product or item from the store. Never use generic labels like "Order status", "Product question", or "Return request". Instead reference what the customer actually bought or is asking about (e.g., "Where's my Ryu Wallet?", "Question about the Bloom collection", "Issue with my Hyper Lime Wallet").
 
 Return ONLY a valid JSON array with exactly 3 objects. No markdown, no explanation:
 [
