@@ -6,7 +6,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowRight, Check } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,14 +15,18 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   // Navigate after the success animation plays
   useEffect(() => {
     if (!success) return;
-    const timer = setTimeout(() => {
-      router.push("/stores");
-    }, 1800);
-    return () => clearTimeout(timer);
+    // Show the loader, then trigger shrink, then navigate
+    const shrinkTimer = setTimeout(() => setExiting(true), 1400);
+    const navTimer = setTimeout(() => router.push("/stores"), 1800);
+    return () => {
+      clearTimeout(shrinkTimer);
+      clearTimeout(navTimer);
+    };
   }, [success, router]);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
@@ -63,10 +68,13 @@ export default function SignupPage() {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="flex flex-col items-center auth-success-enter">
-          {/* Animated checkmark */}
-          <div className="auth-success-ring relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15]">
-            <Check className="h-10 w-10 text-white auth-success-check" strokeWidth={3} />
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-mk-accent to-[#C44D15] auth-success-pulse" />
+          {/* Animated loading loop */}
+          <div className={`h-28 w-28 ${exiting ? "animate-lottie-shrink" : "animate-lottie-grow"}`}>
+            <DotLottieReact
+              src="https://lottie.host/acc1a2c9-d5a0-4f40-aece-dce57e0fba82/gatZAs7ixQ.lottie"
+              loop
+              autoplay
+            />
           </div>
 
           {/* Welcome text */}
@@ -76,13 +84,6 @@ export default function SignupPage() {
           <p className="mt-3 text-base text-mk-text-muted auth-success-text-2">
             Setting up your workspace...
           </p>
-
-          {/* Loading dots */}
-          <div className="mt-6 flex gap-1.5 auth-success-text-2">
-            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="h-2 w-2 rounded-full bg-mk-accent/40 animate-bounce" style={{ animationDelay: "300ms" }} />
-          </div>
         </div>
       </div>
     );

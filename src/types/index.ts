@@ -534,7 +534,7 @@ export const PLANS: Record<PlanName, PlanDetails> = {
     pricing: { monthly: 89, quarterly: 69, yearly: 59 },
     emails_limit: 100,
     features: [
-      "100 AI replies/month",
+      "100 email replies/month",
       "1 store",
       "Shopify order lookup",
       "Multi-language",
@@ -548,7 +548,7 @@ export const PLANS: Record<PlanName, PlanDetails> = {
     pricing: { monthly: 189, quarterly: 169, yearly: 159 },
     emails_limit: 500,
     features: [
-      "500 AI replies/month",
+      "500 email replies/month",
       "Up to 3 stores",
       "Shopify order lookup",
       "Multi-language",
@@ -563,7 +563,7 @@ export const PLANS: Record<PlanName, PlanDetails> = {
     pricing: { monthly: 489, quarterly: 469, yearly: 459 },
     emails_limit: 2500,
     features: [
-      "2500 AI replies/month",
+      "2500 email replies/month",
       "Unlimited stores",
       "Shopify order lookup",
       "Multi-language",

@@ -373,3 +373,59 @@
   background-size: 200% 100%;
   animation: text-shimmer 2s ease-in-out infinite;
 }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+@keyframes lottie-grow {
+  from { opacity: 0; transform: scale(0); }
+  60% { transform: scale(1.1); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@utility animate-lottie-grow {
+  animation: lottie-grow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes lottie-shrink {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0); }
+}
+
+@utility animate-lottie-shrink {
+  animation: lottie-shrink 0.4s ease-in both;
+}
+
+/* Glassy card with iridescent border */
+.glassy-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 0 1px rgba(232, 221, 208, 0.35),
+    0 1px 2px rgba(26, 18, 7, 0.04),
+    0 8px 24px rgba(26, 18, 7, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Glassy card — popular/accent variant */
+.glassy-card-popular {
+  position: relative;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid rgba(224, 90, 26, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(224, 90, 26, 0.1),
+    0 1px 2px rgba(26, 18, 7, 0.04),
+    0 8px 32px rgba(224, 90, 26, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}

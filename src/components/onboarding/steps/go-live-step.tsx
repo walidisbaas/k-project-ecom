@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,18 @@ interface GoLiveStepProps {
 
 export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
   const [interval, setInterval] = useState<BillingInterval>("quarterly");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const idx = INTERVALS.findIndex((i) => i.key === interval);
+    const btn = container.children[idx + 1] as HTMLElement; // +1 to skip indicator div
+    if (btn) {
+      setIndicator({ left: btn.offsetLeft, width: btn.offsetWidth });
+    }
+  }, [interval]);
 
   const handleCheckout = async (priceIdEnv: string) => {
     try {
@@ -89,50 +101,37 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
 
       {/* Billing interval toggle */}
       <div className="mx-auto mt-8 flex items-center justify-center onboarding-stagger-2">
-        <div className="inline-flex rounded-full border border-mk-border bg-white p-1">
-          {INTERVALS.map((opt) => {
-            const savings =
-              opt.key !== "monthly"
-                ? Math.round(
-                    ((PLANS.growth.pricing.monthly -
-                      PLANS.growth.pricing[opt.key]) /
-                      PLANS.growth.pricing.monthly) *
-                      100
-                  )
-                : 0;
-
-            return (
-              <button
-                key={opt.key}
-                onClick={() => setInterval(opt.key)}
-                className={cn(
-                  "relative rounded-full px-6 py-2.5 text-sm font-medium transition-all",
-                  interval === opt.key
-                    ? "bg-mk-text text-white shadow-sm"
-                    : "text-mk-text-muted hover:text-mk-text-secondary"
-                )}
-              >
-                {opt.label}
-                {savings > 0 && (
-                  <span
-                    className={cn(
-                      "ml-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold",
-                      interval === opt.key
-                        ? "bg-white/20 text-white"
-                        : "bg-mk-green-light text-mk-green"
-                    )}
-                  >
-                    Save {savings}%
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div
+          ref={containerRef}
+          className="relative inline-flex rounded-full border border-mk-accent/20 bg-mk-accent-light p-1"
+        >
+          {/* Sliding indicator */}
+          <div
+            className="absolute top-1 bottom-1 rounded-full bg-white shadow-sm transition-all duration-300 ease-out"
+            style={{
+              width: indicator.width,
+              left: indicator.left,
+            }}
+          />
+          {INTERVALS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setInterval(opt.key)}
+              className={cn(
+                "relative z-10 rounded-full px-6 py-2 text-sm font-medium transition-colors duration-300",
+                interval === opt.key
+                  ? "text-mk-text"
+                  : "text-mk-text-muted hover:text-mk-accent/70"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Pricing cards */}
-      <div className="mx-auto mt-8 grid max-w-4xl gap-5 sm:grid-cols-3 onboarding-stagger-3">
+      <div className="mx-auto mt-8 grid max-w-4xl gap-5 px-4 sm:grid-cols-3 sm:px-0 onboarding-stagger-3">
         {PLAN_CARDS.map((card) => {
           const plan = PLANS[card.key];
           const price = plan.pricing[interval];
@@ -142,15 +141,15 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
             <div
               key={card.key}
               className={cn(
-                "group relative overflow-hidden rounded-2xl bg-white transition-all hover:shadow-lg hover:-translate-y-0.5",
+                "group relative overflow-hidden rounded-2xl transition-all hover:-translate-y-0.5",
                 card.popular
-                  ? "border-2 border-mk-accent"
-                  : "border border-mk-border"
+                  ? "glassy-card-popular"
+                  : "glassy-card"
               )}
             >
               {card.popular && (
                 <div className="absolute right-4 top-5">
-                  <div className="flex items-center gap-1 rounded-full bg-mk-accent px-3 py-1">
+                  <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-mk-accent to-[#C44D15] px-3 py-1 shadow-sm">
                     <Sparkles className="h-3 w-3 text-white" />
                     <span className="text-[11px] font-bold text-white">
                       Most popular
@@ -188,10 +187,10 @@ export function GoLiveStep({ storeId, onBack }: GoLiveStepProps) {
                 <button
                   onClick={() => handleCheckout(plan.price_id_env)}
                   className={cn(
-                    "mt-6 w-full rounded-xl py-3 text-sm font-semibold transition-colors",
+                    "mt-6 w-full rounded-xl py-3 text-sm font-semibold transition-all",
                     card.popular
-                      ? "bg-mk-accent text-white hover:bg-mk-accent-hover"
-                      : "border-2 border-mk-text bg-mk-text text-white hover:bg-mk-text/90"
+                      ? "bg-gradient-to-r from-mk-accent to-[#C44D15] text-white shadow-[0_2px_8px_rgba(224,90,26,0.3)] hover:shadow-[0_4px_16px_rgba(224,90,26,0.4)]"
+                      : "border border-mk-border bg-white text-mk-text hover:border-mk-text hover:bg-mk-text hover:text-white"
                   )}
                 >
                   Get started

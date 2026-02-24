@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import type { Store, ScrapeExtractResult } from "@/types";
 
 /** Normalize URL input: accept mystore.com, www.mystore.com, or https://... */
 function normalizeWebsiteUrl(input: string): string {
@@ -20,14 +22,116 @@ interface CreateStoreStepProps {
   onCreated: (storeId: string) => void;
 }
 
+const LOADING_TEXTS = [
+  "Scanning your website...",
+  "Learning your brand voice...",
+  "Setting up your AI assistant...",
+];
+
+const LOADING_DURATION = 7000;
+const TEXT_INTERVAL = Math.floor(LOADING_DURATION / LOADING_TEXTS.length);
+
 export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [textIndex, setTextIndex] = useState(0);
+  const [exiting, setExiting] = useState(false);
+  const storeIdRef = useRef<string | null>(null);
+  const timerDoneRef = useRef(false);
+  const imageReadyRef = useRef(false);
+
+  // Rotate loading texts
+  useEffect(() => {
+    if (!loading) return;
+    setTextIndex(0);
+    const interval = setInterval(() => {
+      setTextIndex((prev) => {
+        if (prev >= LOADING_TEXTS.length - 1) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, TEXT_INTERVAL);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  // Trigger shrink animation then proceed to next step
+  const startExit = useRef<() => void>(undefined);
+  startExit.current = () => {
+    if (exiting) return;
+    setExiting(true);
+    const id = storeIdRef.current!;
+    setTimeout(() => onCreated(id), 400); // matches shrink duration
+  };
+
+  const tryProceedRef = useRef<() => void>(undefined);
+  tryProceedRef.current = () => {
+    if (timerDoneRef.current && storeIdRef.current && imageReadyRef.current) {
+      startExit.current!();
+    }
+  };
+
+  // 7-second timer — proceed when both timer + API are done + image preloaded
+  useEffect(() => {
+    if (!loading) return;
+    timerDoneRef.current = false;
+    imageReadyRef.current = false;
+    const timeout = setTimeout(() => {
+      timerDoneRef.current = true;
+      tryProceedRef.current!();
+    }, LOADING_DURATION);
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
+  // Poll for scrape completion & preload screenshot into browser cache
+  useEffect(() => {
+    if (!loading) return;
+
+    const interval = setInterval(async () => {
+      const id = storeIdRef.current;
+      if (!id || imageReadyRef.current) return;
+
+      try {
+        const res = await fetch(`/api/stores/${id}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { data: Store };
+        const scrapeData = data.data.scrape_data as ScrapeExtractResult | null;
+        const url = scrapeData?.screenshot_url;
+
+        if (data.data.scrape_status === "failed") {
+          // No image to preload — let confirm step handle the error
+          imageReadyRef.current = true;
+          tryProceedRef.current!();
+          return;
+        }
+
+        if (!url) return; // still scraping
+
+        // Preload the image into browser cache
+        const img = new window.Image();
+        img.src = url;
+        img.onload = () => {
+          imageReadyRef.current = true;
+          tryProceedRef.current!();
+        };
+        img.onerror = () => {
+          imageReadyRef.current = true;
+          tryProceedRef.current!();
+        };
+      } catch {
+        // keep polling
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedUrl = normalizeWebsiteUrl(websiteUrl);
     if (!normalizedUrl) return;
+    storeIdRef.current = null;
     setLoading(true);
 
     // Derive store name from URL domain
@@ -56,26 +160,53 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
       }
 
       const data = (await res.json()) as { data: { id: string } };
-      onCreated(data.data.id);
+      storeIdRef.current = data.data.id;
     } catch {
-      // Error handled silently
-    } finally {
       setLoading(false);
     }
   };
 
+  // ── Loading state ──
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-10rem)] flex-col items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className={`h-44 w-44 ${exiting ? "animate-lottie-shrink" : "animate-lottie-grow"}`}>
+            <DotLottieReact
+              src="https://lottie.host/acc1a2c9-d5a0-4f40-aece-dce57e0fba82/gatZAs7ixQ.lottie"
+              loop
+              autoplay
+            />
+          </div>
+
+          <p
+            key={textIndex}
+            className="mt-8 animate-fade-in bg-gradient-to-r from-mk-accent via-[#E8873A] to-[#C44D15] bg-clip-text text-center text-xl font-medium text-transparent"
+          >
+            {LOADING_TEXTS[textIndex]}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-10rem)] flex-col items-center justify-center">
-      <div className="w-full max-w-lg text-center onboarding-stagger-1">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-mk-accent-light">
-          <Sparkles className="h-8 w-8 text-mk-accent" />
+      <div className="w-full max-w-2xl text-center onboarding-stagger-1">
+        <div className="mx-auto mb-6 h-24 w-24">
+          <DotLottieReact
+            src="https://lottie.host/acc1a2c9-d5a0-4f40-aece-dce57e0fba82/gatZAs7ixQ.lottie"
+            loop
+            autoplay
+          />
         </div>
         <h1 className="font-heading text-4xl leading-tight text-mk-text sm:text-5xl">
           Welcome to Kenso
         </h1>
-        <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-mk-text-muted">
-          Let&apos;s set up your AI-powered customer support in just a few
-          minutes. Enter your website URL to get started.
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-mk-text-muted">
+          Set up your AI-powered customer support in minutes.
+          <br />
+          Enter your website URL to get started.
         </p>
       </div>
 
@@ -89,12 +220,8 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
             placeholder="yourstore.com"
             required
             autoFocus
-            className="h-14 text-center text-lg"
+            className="h-14 bg-white text-center text-lg"
           />
-          <p className="mt-3 text-center text-sm text-mk-text-muted">
-            We&apos;ll scan your website to learn your brand voice and
-            policies automatically.
-          </p>
         </div>
 
         <Button
@@ -103,14 +230,7 @@ export function CreateStoreStep({ onCreated }: CreateStoreStepProps) {
           size="lg"
           className="h-14 w-full bg-mk-accent text-base hover:bg-mk-accent-hover"
         >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Creating your store...
-            </>
-          ) : (
-            "Get started \u2192"
-          )}
+          Get started &rarr;
         </Button>
       </form>
     </div>

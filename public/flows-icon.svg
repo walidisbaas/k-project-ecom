@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Center hub -->
+  <circle cx="60" cy="60" r="16" fill="#E05A1A"/>
+  <circle cx="60" cy="60" r="10" fill="#F4845F" opacity="0.6"/>
+  <!-- Top node -->
+  <circle cx="60" cy="18" r="12" fill="#C44D15"/>
+  <circle cx="60" cy="18" r="7" fill="#E8733A" opacity="0.5"/>
+  <!-- Bottom-left node -->
+  <circle cx="24" cy="96" r="12" fill="#C44D15"/>
+  <circle cx="24" cy="96" r="7" fill="#E8733A" opacity="0.5"/>
+  <!-- Bottom-right node -->
+  <circle cx="96" cy="96" r="12" fill="#C44D15"/>
+  <circle cx="96" cy="96" r="7" fill="#E8733A" opacity="0.5"/>
+  <!-- Connecting lines -->
+  <line x1="60" y1="30" x2="60" y2="44" stroke="#E05A1A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="33" y1="88" x2="48" y2="72" stroke="#E05A1A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="87" y1="88" x2="72" y2="72" stroke="#E05A1A" stroke-width="4" stroke-linecap="round"/>
+  <!-- Directional arrows on lines -->
+  <polygon points="60,44 55,38 65,38" fill="#E05A1A"/>
+  <polygon points="48,72 42,68 46,77" fill="#E05A1A"/>
+  <polygon points="72,72 78,68 74,77" fill="#E05A1A"/>
+</svg>

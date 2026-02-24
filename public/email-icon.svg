@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Envelope body -->
+  <rect x="10" y="32" width="100" height="66" rx="10" fill="#3B7DD8"/>
+  <!-- Bottom fold shadow -->
+  <path d="M10 55v33a10 10 0 0010 10h80a10 10 0 0010-10V55L66.5 79a10 10 0 01-13 0L10 55z" fill="#2E6BC4"/>
+  <!-- Open flap (folded back behind) -->
+  <path d="M20 32a10 10 0 00-10 10l44 36a10 10 0 0012 0l44-36a10 10 0 00-10-10H20z" fill="#5BA0E8"/>
+  <!-- V-crease on flap -->
+  <path d="M10 42l50 38 50-38" fill="none" stroke="#4A90D9" stroke-width="1.5"/>
+  <!-- Letter sticking out -->
+  <rect x="26" y="16" width="68" height="52" rx="5" fill="#F7F7F7"/>
+  <rect x="36" y="28" width="42" height="3.5" rx="1.75" fill="#C8C8C8"/>
+  <rect x="36" y="37" width="34" height="3.5" rx="1.75" fill="#D4D4D4"/>
+  <rect x="36" y="46" width="38" height="3.5" rx="1.75" fill="#D4D4D4"/>
+  <!-- @ symbol on letter -->
+  <circle cx="44" cy="28" r="0" fill="none"/>
+</svg>

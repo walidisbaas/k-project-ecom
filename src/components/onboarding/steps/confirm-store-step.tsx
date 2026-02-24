@@ -147,12 +147,8 @@ export function ConfirmStoreStep({
         <h1 className="font-heading text-4xl leading-tight text-mk-text sm:text-5xl">
           Is this your store?
         </h1>
-        <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-mk-text-muted">
-          We found{" "}
-          <span className="font-medium text-mk-text-secondary">
-            {store?.store_name}
-          </span>{" "}
-          — confirm this is correct so we can set up your AI agent.
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-mk-text-muted">
+          We found <span className="font-medium text-mk-text-secondary">{store?.store_name}</span> — confirm this is correct so we can set up your AI agent.
         </p>
       </div>
 

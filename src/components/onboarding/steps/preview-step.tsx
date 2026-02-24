@@ -234,6 +234,7 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
   }
 
   const hasMessages = messages.length > 0;
+  const hasAiReply = messages.some((m) => m.role === "ai");
 
   return (
     <div className="px-4 py-6 sm:px-0 sm:py-10">
@@ -553,8 +554,14 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
         </Button>
         <Button
           onClick={onNext}
+          disabled={!hasAiReply}
           size="lg"
-          className="h-10 text-sm bg-mk-accent hover:bg-mk-accent-hover sm:h-12 sm:text-base"
+          className={cn(
+            "h-10 text-sm sm:h-12 sm:text-base transition-colors",
+            hasAiReply
+              ? "bg-mk-accent hover:bg-mk-accent-hover"
+              : "bg-mk-border/60 text-mk-text-muted cursor-not-allowed hover:bg-mk-border/60"
+          )}
         >
           <span className="sm:hidden">Continue</span>
           <span className="hidden sm:inline">Looks good, continue</span>

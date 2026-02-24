@@ -95,11 +95,6 @@ export async function GET(req: NextRequest) {
       { onConflict: "store_id" }
     );
 
-    // Advance onboarding step
-    await supabaseAdmin
-      .from("stores")
-      .update({ onboarding_step: 4 })
-      .eq("id", state);
 
     return NextResponse.redirect(
       `${APP_URL}/onboarding?store_id=${state}`
