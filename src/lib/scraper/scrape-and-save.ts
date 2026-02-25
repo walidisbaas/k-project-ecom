@@ -4,17 +4,55 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { openrouter, PREVIEW_MODEL } from "@/lib/openrouter/client";
 import { buildTemplateGenerationPrompt } from "@/lib/openrouter/prompts";
 import * as cheerio from "cheerio";
-import type { Json, WebsitePage } from "@/types";
+import type { Json, WebsitePage, StorePolicies } from "@/types";
+
+const SUPPORTED_LANGUAGES = ["en", "nl", "de", "fr", "es"] as const;
 
 /**
- * Three-level pipeline — each level saves to DB as soon as it finishes.
+ * Detect the primary language of a page from its headline/opening text.
+ * Uses a lightweight LLM call on the first ~500 chars.
+ */
+async function detectLanguage(markdown: string): Promise<string> {
+  const snippet = markdown.slice(0, 500);
+  try {
+    const response = await openrouter.chat.completions.create({
+      model: PREVIEW_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: `What language is this text written in? Reply with ONLY the language code: en, nl, de, fr, or es.\n\n${snippet}`,
+        },
+      ],
+      temperature: 0,
+      max_tokens: 5,
+    });
+    const code = (response.choices[0]?.message.content ?? "en").trim().toLowerCase();
+    return SUPPORTED_LANGUAGES.includes(code as typeof SUPPORTED_LANGUAGES[number]) ? code : "en";
+  } catch {
+    return "en";
+  }
+}
+
+const POLICY_KEYWORDS = [
+  "shipping", "return", "refund", "policy", "faq",
+  "trade", "warranty", "guarantee", "exchange",
+];
+
+function isPolicyUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return POLICY_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+/**
+ * Four-level pipeline — each level saves to DB as soon as it finishes.
  *
- * Level 1: Screenshot + favicon (~3-5s) — awaited, runs in parallel with Level 2
- * Level 2: Landing + templates  (~5-10s) — awaited, saves website_pages + scrape_data.templates
- * Level 3: Footer + products    (~15-30s) — fire-and-forget, best-effort enrichment
+ * Level 1:   Screenshot + favicon  (~3-5s) — awaited, saved immediately
+ * Level 2:   Landing + templates   (~5-10s) — awaited, saves website_pages + scrape_data.templates
+ * Level 2.5: Policy footer links + AI policy extraction (~5-12s) — awaited with 12s timeout
+ * Level 3:   Remaining footer + products (~15-30s) — fire-and-forget, best-effort enrichment
  *
  * Called inside after() from the scrape route, so Vercel keeps the function alive.
- * Only Level 1 + 2 must complete; Level 3 is optional.
+ * scrape_status is set to "complete" only after Level 2.5 finishes (or times out).
  */
 export async function scrapeAndSaveToStore(
   storeId: string,
@@ -35,7 +73,7 @@ export async function scrapeAndSaveToStore(
       fetchFavicon(baseUrl),
     ]);
 
-    // ── Level 1: Save screenshot + favicon ───────────────────
+    // ── Level 1: Save screenshot + favicon (keep scraping) ───
     const screenshotUrl =
       screenshotResult.status === "fulfilled" ? screenshotResult.value : null;
     const faviconUrl =
@@ -44,9 +82,7 @@ export async function scrapeAndSaveToStore(
     await supabaseAdmin
       .from("stores")
       .update({
-        scrape_status: "complete",
         scrape_data: { screenshot_url: screenshotUrl, favicon_url: faviconUrl } as unknown as Json,
-        onboarding_step: 2,
       })
       .eq("id", storeId);
 
@@ -76,19 +112,104 @@ export async function scrapeAndSaveToStore(
     }
 
     if (landingPage) {
-      // Save landing page to DB immediately
+      // Detect language from landing page headline
+      const language = await detectLanguage(landingPage.markdown);
+
+      // Save landing page + language to DB immediately
       await supabaseAdmin
         .from("stores")
-        .update({ website_pages: [landingPage] as unknown as Json })
+        .update({
+          website_pages: [landingPage] as unknown as Json,
+          primary_language: language,
+        })
         .eq("id", storeId);
 
       // Generate templates — must complete before function exits
-      await generateAndCacheTemplates(storeId, [landingPage]);
+      await generateAndCacheTemplates(storeId, [landingPage], language);
     }
 
-    // ── Level 3: Footer + products — fire-and-forget ─────────
+    // ── Level 2.5: Policy footer links + AI extraction (12s timeout) ──
+    const policyLinksScraped = new Set<string>();
+
     if (landingPage && footerHtml) {
-      scrapeExtraPages(storeId, baseUrl, footerHtml).catch((err) => {
+      const footerLinks = extractFooterLinks(footerHtml, baseUrl);
+      const policyLinks = footerLinks.filter(isPolicyUrl);
+      policyLinks.forEach((url) => policyLinksScraped.add(url));
+
+      if (policyLinks.length > 0) {
+        const extractWithTimeout = async () => {
+          // Scrape policy pages
+          const policyPages: WebsitePage[] = [];
+          const results = await Promise.allSettled(
+            policyLinks.map(async (url) => {
+              const result = await firecrawl.scrape(url, { formats: ["markdown"] });
+              const md = (result.markdown ?? "").slice(0, 15000);
+              if (md.length === 0) return null;
+              return {
+                url: result.metadata?.sourceURL ?? url,
+                title: result.metadata?.title ?? "",
+                markdown: md,
+              } satisfies WebsitePage;
+            })
+          );
+          for (const r of results) {
+            if (r.status === "fulfilled" && r.value) policyPages.push(r.value);
+          }
+
+          // Merge policy pages into website_pages
+          if (policyPages.length > 0) {
+            const { data: current } = await supabaseAdmin
+              .from("stores")
+              .select("website_pages")
+              .eq("id", storeId)
+              .single();
+
+            const existing = (current?.website_pages ?? []) as WebsitePage[];
+            const merged = [...existing, ...policyPages];
+
+            await supabaseAdmin
+              .from("stores")
+              .update({ website_pages: merged as unknown as Json })
+              .eq("id", storeId);
+          }
+
+          // Extract policies via AI
+          const allPages = [landingPage!, ...policyPages];
+          const storePolicies = await extractPoliciesFromPages(allPages);
+
+          if (storePolicies) {
+            await supabaseAdmin
+              .from("stores")
+              .update({ store_policies: storePolicies as unknown as Json })
+              .eq("id", storeId);
+          }
+        };
+
+        try {
+          await Promise.race([
+            extractWithTimeout(),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("policy-extraction-timeout")), 12_000)
+            ),
+          ]);
+        } catch (err) {
+          console.error("[scrapeAndSaveToStore] Policy extraction timed out or failed:", {
+            storeId,
+            error: err instanceof Error ? err.message : "unknown",
+          });
+        }
+      }
+    }
+
+    // ── Mark scrape as complete ──────────────────────────────
+    await supabaseAdmin
+      .from("stores")
+      .update({ scrape_status: "complete", onboarding_step: 2 })
+      .eq("id", storeId);
+
+    // ── Level 3: Remaining footer + products — fire-and-forget ──
+    if (landingPage && footerHtml) {
+      scrapeExtraPages(storeId, baseUrl, footerHtml, policyLinksScraped).catch((err) => {
         console.error("[scrapeAndSaveToStore] Extra page scrape failed:", {
           storeId,
           error: err instanceof Error ? err.message : "unknown",
@@ -118,10 +239,12 @@ export async function scrapeAndSaveToStore(
 async function scrapeExtraPages(
   storeId: string,
   baseUrl: string,
-  footerHtml: string
+  footerHtml: string,
+  skipUrls?: Set<string>
 ): Promise<void> {
   const extraPages: WebsitePage[] = [];
-  const footerLinks = extractFooterLinks(footerHtml, baseUrl);
+  const footerLinks = extractFooterLinks(footerHtml, baseUrl)
+    .filter((url) => !skipUrls?.has(url));
 
   // Scrape footer links + fetch products.json in parallel
   const [footerResults] = await Promise.allSettled([
@@ -283,7 +406,8 @@ async function fetchFavicon(baseUrl: string): Promise<string | null> {
  */
 async function generateAndCacheTemplates(
   storeId: string,
-  pages: WebsitePage[]
+  pages: WebsitePage[],
+  language = "en"
 ): Promise<void> {
   try {
     const { data: store } = await supabaseAdmin
@@ -298,7 +422,7 @@ async function generateAndCacheTemplates(
     const scrapeData = (store.scrape_data ?? {}) as Record<string, unknown>;
     if (Array.isArray(scrapeData.templates) && scrapeData.templates.length > 0) return;
 
-    const prompt = buildTemplateGenerationPrompt(store.store_name, pages);
+    const prompt = buildTemplateGenerationPrompt(store.store_name, pages, language);
 
     const response = await openrouter.chat.completions.create({
       model: PREVIEW_MODEL,
@@ -342,6 +466,125 @@ async function generateAndCacheTemplates(
       storeId,
       error: err instanceof Error ? err.message : "unknown",
     });
+  }
+}
+
+/**
+ * Extract store policies from scraped pages using AI.
+ * Returns null if no policy content is found.
+ */
+async function extractPoliciesFromPages(
+  pages: WebsitePage[]
+): Promise<StorePolicies | null> {
+  const policyContent = pages
+    .filter((p) => {
+      const url = p.url.toLowerCase();
+      const title = p.title.toLowerCase();
+      return POLICY_KEYWORDS.some((kw) => url.includes(kw) || title.includes(kw));
+    })
+    .map((p) => p.markdown)
+    .join("\n\n---\n\n")
+    .slice(0, 15000);
+
+  // Also include the landing page markdown as context even if it doesn't match keywords
+  const landingMd = pages[0]?.markdown ?? "";
+  const context = [
+    policyContent ? `POLICY PAGES:\n${policyContent}` : "",
+    landingMd && !policyContent.includes(landingMd)
+      ? `LANDING PAGE:\n${landingMd.slice(0, 5000)}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  if (!context.trim()) return null;
+
+  try {
+    const response = await openrouter.chat.completions.create({
+      model: PREVIEW_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You analyze ecommerce store policies and extract structured configuration data. Return ONLY valid JSON, no markdown or explanation.",
+        },
+        {
+          role: "user",
+          content: `Analyze this store's policies and extract the following settings. Pick the CLOSEST matching option for each field.
+
+STORE POLICY CONTENT:
+${context}
+
+Extract as JSON with these exact fields:
+{
+  "shipping_days": <closest match from [1, 2, 7, 14] based on their typical delivery timeframe>,
+  "response_interval_hours": <closest match from [1, 2, 4, 8] based on their stated response time, default 4>,
+  "trade_ins_enabled": <true if they accept trade-ins or old items, false otherwise>,
+  "receive_old_items": <true if they receive old/used items back, false otherwise>,
+  "average_cogs": <estimated cost of goods if mentioned, default 10>,
+  "prevent_refunds": <true if they try to avoid giving refunds or have strict no-refund policy, false if they offer easy refunds>,
+  "offer_vouchers": <true if they offer store credit/vouchers as refund alternative>,
+  "offer_partial_refunds": <true if they offer partial refunds>,
+  "partial_refund_percentage": <closest match from [10, 20, 30], default 20>
+}
+
+If you can't determine a value, use these defaults:
+- shipping_days: 7
+- response_interval_hours: 4
+- trade_ins_enabled: false
+- receive_old_items: false
+- average_cogs: 10
+- prevent_refunds: false
+- offer_vouchers: false
+- offer_partial_refunds: false
+- partial_refund_percentage: 20`,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 500,
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message.content;
+    if (!content) return null;
+
+    const parsed = JSON.parse(content) as Partial<StorePolicies>;
+
+    const SHIPPING_OPTIONS = [1, 2, 7, 14];
+    const RESPONSE_OPTIONS = [1, 2, 4, 8];
+    const REFUND_OPTIONS = [10, 20, 30];
+
+    const closest = (val: number | undefined, opts: number[], def: number) => {
+      if (val === undefined) return def;
+      return opts.reduce((a, b) =>
+        Math.abs(b - val) < Math.abs(a - val) ? b : a
+      );
+    };
+
+    return {
+      shipping_days: closest(parsed.shipping_days, SHIPPING_OPTIONS, 7),
+      response_interval_hours: closest(
+        parsed.response_interval_hours,
+        RESPONSE_OPTIONS,
+        4
+      ),
+      trade_ins_enabled: parsed.trade_ins_enabled ?? false,
+      receive_old_items: parsed.receive_old_items ?? false,
+      average_cogs: Math.max(0, Math.min(100000, parsed.average_cogs ?? 10)),
+      prevent_refunds: parsed.prevent_refunds ?? false,
+      offer_vouchers: parsed.offer_vouchers ?? false,
+      offer_partial_refunds: parsed.offer_partial_refunds ?? false,
+      partial_refund_percentage: closest(
+        parsed.partial_refund_percentage,
+        REFUND_OPTIONS,
+        20
+      ),
+    };
+  } catch (err) {
+    console.error("[extractPoliciesFromPages] AI extraction failed:", {
+      error: err instanceof Error ? err.message : "unknown",
+    });
+    return null;
   }
 }
 

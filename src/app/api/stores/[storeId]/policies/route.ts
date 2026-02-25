@@ -36,7 +36,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = storePoliciesSchema.safeParse(body);
+  // Separate advance_step flag from policies data before validation
+  const { advance_step, ...policiesBody } = body as Record<string, unknown>;
+
+  const parsed = storePoliciesSchema.safeParse(policiesBody);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation error", details: parsed.error.flatten() },
@@ -44,13 +47,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     );
   }
 
-  // Advance onboarding step if needed (step 2 = policy config in DB)
   const updates: Record<string, unknown> = {
     store_policies: parsed.data as unknown as Json,
     updated_at: new Date().toISOString(),
   };
 
-  if ((store.onboarding_step ?? 0) < 3) {
+  // Only advance onboarding step on explicit "Continue" click
+  if (advance_step === true && (store.onboarding_step ?? 0) < 3) {
     updates.onboarding_step = 3;
   }
 

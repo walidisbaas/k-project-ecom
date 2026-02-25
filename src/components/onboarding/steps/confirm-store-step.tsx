@@ -125,8 +125,13 @@ export function ConfirmStoreStep({
       setImageLoaded(false);
       return;
     }
-    const img = new Image();
+    const img = new window.Image();
     img.src = screenshotUrl;
+    // If already in browser cache from create-store-step, show instantly
+    if (img.complete) {
+      setImageLoaded(true);
+      return;
+    }
     img.onload = () => setImageLoaded(true);
     img.onerror = () => setImageLoaded(false);
   }, [screenshotUrl]);

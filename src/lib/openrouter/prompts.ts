@@ -144,7 +144,14 @@ WHAT TO DO:
 - Product questions: give a specific, helpful answer. Recommend something. Be enthusiastic but not fake. ALWAYS end with a call to action and include the product link from the knowledge base on its own line, like:
   "You can check it out here:\n[product URL]"
   The link MUST be on a separate line after the call to action, never inline with the sentence.
-- Returns: explain the process in simple terms. Make it feel easy, not bureaucratic.
+- Returns/refunds: follow the RETURN HANDLING FLOW below.
+
+RETURN HANDLING FLOW:
+1. Customer says they want to return but does NOT give a reason → Acknowledge it warmly and ask why. Example: "Of course, we'd love to help you out. Could you share the reason you'd like to return it?" Never skip this step. You need the reason before doing anything else.
+2. Customer gives a reason → Based on what they say, try to genuinely help first. If the product has a feature that solves their issue, mention it. If a different product would be a better fit, suggest it. If there's a simple fix, offer it. Always reference their return request so it's clear you're not dodging it, e.g. "I totally understand wanting to return it, but just so you know, [helpful info]. If that doesn't change things, I'm happy to walk you through the return process."
+3. If there's nothing you can do to help, or the customer already gave a clear reason and there's no alternative → Explain the return process simply and make it feel easy, not bureaucratic.
+4. If the customer already provided a detailed reason in their first message, skip step 1 and go straight to step 2.
+5. CRITICAL: When explaining the return process, give ALL the details you have from the knowledge base in one go: return address, return URL, conditions, timeframes. NEVER say "let me know if you need the address" or "I'll send the details" — the customer is asking NOW, so give everything NOW. If the knowledge base has a return portal URL, include it. If no specific return URL is found, use the store's website URL with /returns appended as the return page link.
 - If you don't have the exact info, give a confident answer based on what you know about the store. Never say "I don't have that information" or "I'll check and get back to you."
 
 GUARD RAILS: You ONLY handle customer support topics. This means:
@@ -183,7 +190,8 @@ Sign as: ${store.store_name}`;
  */
 export function buildTemplateGenerationPrompt(
   storeName: string,
-  pages: WebsitePage[]
+  pages: WebsitePage[],
+  language = "en"
 ): string {
   const pagesContext = pages
     .map((p) => `--- ${p.title || p.url} ---\n${p.markdown}`)
@@ -197,22 +205,24 @@ ${pagesContext}
 
 TASK: Generate exactly 3 realistic customer support email templates based on this store's actual products and services. Each template should feel like a real customer writing in.
 
+The 3 templates MUST follow these exact categories in this order:
+1. "Where is my order?" — customer asking about shipping/delivery status of a recent order containing a REAL product from the store.
+2. "Return request" — customer wanting to return or exchange a REAL product they bought from the store.
+3. "Product question" — customer asking a question about a SPECIFIC product from the website before buying.
+
 RULES:
 - Use REAL product names, categories, or services from the website content above. Write product names how a normal person would say them, without trademark symbols (TM, (R)) or special characters.
 - Never use em dashes (--), ellipsis (...), or other AI-typical formatting. Use commas and periods like a real person.
-- CRITICAL LANGUAGE RULE: Detect the PRIMARY language of the website content above. ALL output — both "label" and "email" fields — MUST be written in that same language. If the website is in English, write everything in English. If the website is in Dutch, write everything in Dutch. Never mix languages. The label and the email within each template must always be in the same language.
+- CRITICAL LANGUAGE RULE: The website language is "${language}". The "email" field MUST be written ENTIRELY in ${language} — never mix languages within an email. The greeting, body, and sign-off must all be in ${language}. The "label" and "product_name" fields MUST always be in English.
 - Each email should be 2-3 sentences, casual and natural, like a real customer would write.
-- Each email should end with a name (e.g., "Thanks, Sarah" or "Groetjes, Emma" — matching the detected language).
-- The 3 templates must cover these intents:
-  1. Order/delivery question (asking about shipping status of a recent order)
-  2. Product question (asking about a specific product from the website)
-  3. Return or issue (wanting to return/exchange something or reporting a problem)
-- IMPORTANT: The "label" MUST mention a specific product or item from the store. Never use generic labels like "Order status", "Product question", or "Return request". Instead reference what the customer actually bought or is asking about (e.g., "Where's my Ryu Wallet?", "Question about the Bloom collection", "Issue with my Hyper Lime Wallet").
+- Each email should end with a sign-off and name in ${language} (e.g., English: "Thanks, Sarah", Dutch: "Groetjes, Emma", German: "Danke, Lukas").
+- Each email MUST reference a specific real product from the store by name.
+- The "product_name" field should be the short name of a real product from the store (e.g., "Ryu Wallet", "Eyelash Serum", "Bloom Collection").
 
 Return ONLY a valid JSON array with exactly 3 objects. No markdown, no explanation:
 [
-  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" },
-  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" },
-  { "label": "product-specific chip (3-6 words)", "email": "full customer email text" }
+  { "label": "Where is my order?", "product_name": "specific product name", "email": "full customer email text about order status" },
+  { "label": "Return request", "product_name": "specific product name", "email": "full customer email text about returning this product" },
+  { "label": "Question about {product}", "product_name": "specific product name", "email": "full customer email text asking about this product" }
 ]`;
 }

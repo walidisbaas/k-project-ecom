@@ -21,19 +21,19 @@ interface TemplateChip {
 
 const DEFAULT_CHIPS: TemplateChip[] = [
   {
-    label: "Where's my order?",
+    label: "Where is my order?",
     email:
       "Hi, I placed order #4821 three days ago and still haven't received a shipping confirmation. Can you check the status for me? Thanks, Sarah",
+  },
+  {
+    label: "Return request",
+    email:
+      "Hello, I received my order but it's not what I expected. I'd like to return it. How do I start? Thanks, Emily",
   },
   {
     label: "Product question",
     email:
       "Hey! I saw a product on your website but I have a few questions before ordering. Can you help me out? Thanks, James",
-  },
-  {
-    label: "I want to return this",
-    email:
-      "Hello, I received my order but it's not what I expected. I'd like to return it. How do I start? Thanks, Emily",
   },
 ];
 
@@ -107,19 +107,17 @@ export function PreviewStep({ storeId, onNext, onBack }: PreviewStepProps) {
         const res = await fetch(`/api/stores/${storeId}/preview/templates`);
         if (!res.ok) continue;
         const data = (await res.json()) as { templates: TemplateChip[] } | null;
-        if (data?.templates && data.templates.length > 0) {
-          setTemplates(data.templates);
+        if (data?.templates && data.templates.length >= 3) {
+          setTemplates(data.templates.slice(0, 3));
           return;
         }
       } catch {
         // continue retrying
       }
-      // If not the last attempt, wait before retrying (background generation may still be running)
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, delay));
       }
     }
-    // All retries exhausted — fall back to defaults
     setTemplates(DEFAULT_CHIPS);
   };
 

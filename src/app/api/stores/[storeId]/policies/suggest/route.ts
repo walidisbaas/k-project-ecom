@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: store } = await supabaseAdmin
+  const { data: store, error } = await supabaseAdmin
     .from("stores")
     .select(
       "id, store_policies, shipping_policy, return_policy, website_pages"
@@ -43,7 +43,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .eq("merchant_id", user.id)
     .single();
 
-  if (!store) {
+  if (error || !store) {
+    console.error("[policies/suggest] Store query failed:", {
+      storeId,
+      userId: user.id,
+      error: error?.message,
+    });
     return NextResponse.json({ error: "Store not found" }, { status: 404 });
   }
 

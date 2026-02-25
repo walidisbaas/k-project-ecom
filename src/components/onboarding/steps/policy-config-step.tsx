@@ -11,9 +11,33 @@ import {
   Clock,
   RefreshCw,
   Shield,
+  Info,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { StorePolicies } from "@/types";
+
+// ── Info tooltip ────────────────────────────────────────────
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="ml-1 inline-flex text-mk-text-muted/60 hover:text-mk-text-muted transition-colors">
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-56">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 // ── Segmented toggle ────────────────────────────────────────
 
@@ -116,7 +140,10 @@ export function PolicyConfigStep({
   const [policies, setPolicies] = useState<StorePolicies>(DEFAULT_POLICIES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const fetched = useRef(false);
+  const initialLoadDone = useRef(false);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Fetch AI-suggested policies on mount
   useEffect(() => {
@@ -136,11 +163,35 @@ export function PolicyConfigStep({
         // use defaults
       } finally {
         setLoading(false);
+        // Delay so the setPolicies above doesn't trigger auto-save
+        requestAnimationFrame(() => {
+          initialLoadDone.current = true;
+        });
       }
     };
 
     void fetchSuggestions();
   }, [storeId]);
+
+  // Auto-save: debounced PATCH on every field change
+  useEffect(() => {
+    if (!initialLoadDone.current) return;
+
+    clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/stores/${storeId}/policies`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(policies),
+        });
+      } catch {
+        // Silent fail for auto-save
+      }
+    }, 800);
+
+    return () => clearTimeout(autoSaveTimer.current);
+  }, [policies, storeId]);
 
   const update = useCallback(
     <K extends keyof StorePolicies>(key: K, value: StorePolicies[K]) => {
@@ -151,16 +202,22 @@ export function PolicyConfigStep({
 
   const handleContinue = async () => {
     setSaving(true);
+    setSaveError(false);
+    // Cancel any pending auto-save
+    clearTimeout(autoSaveTimer.current);
     try {
-      await fetch(`/api/stores/${storeId}/policies`, {
+      const res = await fetch(`/api/stores/${storeId}/policies`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(policies),
+        body: JSON.stringify({ ...policies, advance_step: true }),
       });
+      if (!res.ok) {
+        setSaveError(true);
+        return;
+      }
       onNext();
     } catch {
-      // still proceed on error
-      onNext();
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -369,25 +426,32 @@ export function PolicyConfigStep({
       </div>
 
       {/* Navigation */}
-      <div className="mx-auto mt-10 flex max-w-lg justify-between onboarding-stagger-3">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onBack}
-          className="h-12"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <Button
-          onClick={handleContinue}
-          size="lg"
-          disabled={saving}
-          className="h-12 bg-mk-accent hover:bg-mk-accent-hover"
-        >
-          {saving ? "Saving..." : "Continue"}
-          {!saving && <ArrowRight className="ml-2 h-4 w-4" />}
-        </Button>
+      <div className="mx-auto mt-10 max-w-lg onboarding-stagger-3">
+        {saveError && (
+          <p className="mb-3 text-center text-sm text-red-500">
+            Failed to save. Please try again.
+          </p>
+        )}
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onBack}
+            className="h-12"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            onClick={handleContinue}
+            size="lg"
+            disabled={saving}
+            className="h-12 bg-mk-accent hover:bg-mk-accent-hover"
+          >
+            {saving ? "Saving..." : "Continue"}
+            {!saving && <ArrowRight className="ml-2 h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </div>
   );

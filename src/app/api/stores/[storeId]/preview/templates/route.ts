@@ -9,6 +9,12 @@ export const maxDuration = 30;
 
 type Params = { params: Promise<{ storeId: string }> };
 
+interface TemplateChipRaw {
+  label: string;
+  email: string;
+  product_name?: string;
+}
+
 interface TemplateChip {
   label: string;
   email: string;
@@ -32,7 +38,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: store } = await supabaseAdmin
     .from("stores")
-    .select("id, store_name, website_pages, scrape_data")
+    .select("id, store_name, website_pages, scrape_data, primary_language")
     .eq("id", storeId)
     .eq("merchant_id", user.id)
     .single();
@@ -53,7 +59,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    const prompt = buildTemplateGenerationPrompt(store.store_name, pages);
+    const language = (store.primary_language as string) || "en";
+    const prompt = buildTemplateGenerationPrompt(store.store_name, pages, language);
 
     const response = await openrouter.chat.completions.create({
       model: PREVIEW_MODEL,
@@ -76,19 +83,20 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ templates: [] });
     }
 
-    let templates: TemplateChip[];
+    let raw: TemplateChipRaw[];
     if (Array.isArray(parsed)) {
-      templates = parsed;
+      raw = parsed;
     } else if (typeof parsed === "object" && parsed !== null) {
       const arr = Object.values(parsed as Record<string, unknown>).find(Array.isArray);
       if (!arr) return NextResponse.json({ templates: [] });
-      templates = arr as TemplateChip[];
+      raw = arr as TemplateChipRaw[];
     } else {
       return NextResponse.json({ templates: [] });
     }
 
-    // Validate shape
-    templates = templates
+    // Validate shape and build final labels
+    const FIXED_LABELS = ["Where is my order?", "Return request"];
+    const templates: TemplateChip[] = raw
       .filter(
         (t) =>
           typeof t.label === "string" &&
@@ -96,7 +104,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
           t.label.length > 0 &&
           t.email.length > 0
       )
-      .slice(0, 3);
+      .slice(0, 3)
+      .map((t, i) => ({
+        label:
+          i < 2
+            ? FIXED_LABELS[i]
+            : t.product_name
+              ? `Question about ${t.product_name}`
+              : "Product question",
+        email: t.email,
+      }));
 
     if (templates.length === 0) {
       return NextResponse.json({ templates: [] });

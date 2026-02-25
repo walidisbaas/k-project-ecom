@@ -109,7 +109,14 @@ ${doRules ? `RULES — ALWAYS DO:\n${doRules}\n` : ""}
 ${dontRules ? `RULES — NEVER DO:\n${dontRules}\n` : ""}
 ${store.shipping_policy ? `SHIPPING POLICY:\n${store.shipping_policy}\n` : ""}
 ${store.return_policy ? `RETURN POLICY:\n${store.return_policy}\n` : ""}
-${policySection}${faqSection ? `FREQUENTLY ASKED QUESTIONS:\n${faqSection}\n` : ""}
+${policySection}RETURN HANDLING FLOW:
+- If a customer wants to return but does NOT give a reason: acknowledge it warmly and ask why first. Example: "Of course, we'd love to help. Could you share the reason you'd like to return it?"
+- If a reason is given: try to genuinely help first. Suggest a fix, an alternative product, or clarify a feature. Always reference their return request so you're not dodging it.
+- If there's nothing you can do, or they insist: explain the return process clearly and make it easy.
+- If the customer already gave a detailed reason upfront, skip asking and go straight to helping.
+- CRITICAL: When explaining the return process, give ALL details you have in one go: return address, return URL, conditions, timeframes. NEVER say "let me know if you need the address" or "I'll send the details later." The customer is asking NOW, so give everything NOW.
+
+${faqSection ? `FREQUENTLY ASKED QUESTIONS:\n${faqSection}\n` : ""}
 
 CRITICAL INSTRUCTIONS:
 - Reply in the same language the customer writes in.
